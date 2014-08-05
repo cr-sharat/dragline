@@ -90,32 +90,24 @@ class Request:
 
         form_data = urlencode(self.form_data) if self.form_data else None
         try:
-
             start = time.time()
             timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
             number = randint(0, len(self.settings.PROXIES))
 
             if number == 0:
-
-                http = httplib2.Http(cache=self.settings.CACHE, timeout=timeout)
-
-
+                http = httplib2.Http(
+                    cache=self.settings.CACHE, timeout=timeout)
             else:
-
-              ip = self.settings.PROXIES[number-1][0]
-              proxy = self.settings.PROXIES[number-1][1]
-              http = httplib2.Http(cache=self.settings.CACHE, timeout=timeout,proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP,ip, proxy))
-
-
-
-
-
+                ip = self.settings.PROXIES[number - 1][0]
+                proxy = self.settings.PROXIES[number - 1][1]
+                http = httplib2.Http(
+                    cache=self.settings.CACHE, timeout=timeout,
+                    proxy_info=httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, ip, proxy))
             req_headers = self.settings.HEADERS
             if self.settings.COOKIE:
                 if Request.cookies:
                     req_headers.update({'Cookie': Request.cookies})
             req_headers.update(self.headers)
-
             headers, content = http.request(
                 self.url, self.method, form_data, req_headers)
 
