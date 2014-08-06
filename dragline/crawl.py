@@ -45,6 +45,7 @@ class Crawler:
         Request.settings = RequestSettings(get('REQUEST'))
         spider_settings = SpiderSettings(get('SPIDER'))
         spider = spider_class(spider_settings)
+        Request.callback_object = spider
         log = LogSettings(get('LOGFORMATTERS'), get('LOGHANDLERS'),
                           get('LOGGERS'))
         if hasattr(self.settings, 'NAMESPACE'):
@@ -109,6 +110,7 @@ class Crawler:
             self.insert(request)
         self.stats['status'] = "running"
         self.stats['start_time'] = self.current_time()
+        self.logger.info("Starting spider %s", dict(self.stats))
 
     def clear(self, finished):
         self.runner.release()
@@ -130,7 +132,6 @@ class Crawler:
         self.lock.acquire()
         if self.running_count == 0:
             self.runner.acquire()
-            self.logger.info("Starting spider... ")
         self.running_count += 1
         self.lock.release()
 
@@ -158,16 +159,12 @@ class Crawler:
         while True:
             request = self.url_queue.get(timeout=2)
             if request:
-                self.logger.info("Processing %s", request)
+                self.logger.debug("Processing %s", request)
                 self.inc_count()
                 try:
                     response = request.send()
                     try:
-                        if isinstance(request.callback, str):
-                            callback = getattr(self.spider, request.callback)
-                        else:
-                            callback = request.callback
-                        requests = callback(response)
+                        requests = request.callback(response)
                         if requests:
                             for i in requests:
                                 self.insert(i)
@@ -188,7 +185,7 @@ class Crawler:
                     self.insert(request, False)
                     raise KeyboardInterrupt
                 else:
-                    self.logger.info("Finished processing %s", request)
+                    self.logger.debug("Finished processing %s", request)
                 finally:
                     self.decr_count()
             else:

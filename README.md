@@ -1,5 +1,8 @@
+========
 Dragline
-=======
+========
+
+[![PyPI version](https://badge.fury.io/py/Dragline.svg)](http://badge.fury.io/py/Dragline)
 
 Dragline is a distributed Python web crawling framework.
 
@@ -23,7 +26,7 @@ Install
 
 The quick way :
 
-    pip install dragline
+    pip install --pre dragline
 
 
 Download the latest release from [Python Package Index] or clone [the repository].
