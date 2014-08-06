@@ -163,7 +163,10 @@ class Crawler:
                 try:
                     response = request.send()
                     try:
-                        callback = getattr(self.spider, request.callback)
+                        if isinstance(request.callback, str):
+                            callback = getattr(self.spider, request.callback)
+                        else:
+                            callback = request.callback
                         requests = callback(response)
                         if requests:
                             for i in requests:

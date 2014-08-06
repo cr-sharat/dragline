@@ -12,6 +12,9 @@ from collections import defaultdict
 import operator
 import socks
 from random import randint
+import types
+import weakref
+
 socket.setdefaulttimeout(5)
 
 
@@ -48,8 +51,9 @@ class Request:
     meta = None
     retry = 0
     cookies = None
+    callback_objects = weakref.WeakValueDictionary()
 
-    def __init__(self, url, method="GET", form_data=None, headers={}, callback=None, meta=None,):
+    def __init__(self, url, method="GET", form_data=None, headers={}, callback=None, meta=None):
         self.url = url
         if method:
             self.method = method
@@ -62,6 +66,28 @@ class Request:
                               for k, v in dict(form_data).items()}
         if headers:
             self.headers = headers
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        if isinstance(self.callback, types.MethodType) and hasattr(self.callback, 'im_self'):
+            oid = Request._remember(self.callback.im_self)
+            d['callback'] = oid, self.callback.__name__
+        return d
+
+    def __setstate__(self, d):
+        if 'callback' in d and isinstance(d['callback'], tuple):
+            d['callback'] = getattr(Request._id2obj(d['callback'][0]), d['callback'][1])
+        self.__dict__ = d
+
+    @classmethod
+    def _remember(cls, obj):
+        oid = id(obj)
+        cls.callback_objects[oid] = obj
+        return oid
+
+    @classmethod
+    def _id2obj(cls, oid):
+        return cls.callback_objects[oid]
 
     def __str__(self):
         return self.get_unique_id(False)
