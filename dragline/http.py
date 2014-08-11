@@ -12,6 +12,7 @@ from collections import defaultdict
 import operator
 import socks
 from random import randint
+from .redisds import Dict
 import types
 
 socket.setdefaulttimeout(5)
@@ -42,7 +43,7 @@ class Request:
     """
 
     settings = RequestSettings()
-    stats = defaultdict(int)
+    stats = Dict("stats:*")
     method = "GET"
     form_data = None
     headers = {}
@@ -131,16 +132,16 @@ class Request:
                 Request.cookies = headers['set-cookie']
 
             res = Response(self.url, content, headers, self.meta)
-            self.stats['pages_crawled'] += 1
-            self.stats['request_bytes'] += len(res)
             end = time.time()
 
             if not headers.fromcache and self.settings.AUTOTHROTTLE:
                 self.updatedelay(end, start)
                 time.sleep(self.settings.DELAY)
-
         except Exception as e:
             raise RequestError(e.message)
+        else:
+            self.stats.inc('pages_crawled')
+            self.stats.inc('request_bytes', len(res))
         return res
 
     def get_unique_id(self, hashing=True):

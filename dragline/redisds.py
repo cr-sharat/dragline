@@ -113,6 +113,10 @@ class Dict(object):
             return int(value)
         return value
 
+    def inc(self, key, value=1):
+        name = self.pattern.replace('*', key)
+        return self.__db.incr(name, value)
+
     def __iter__(self):
         for n, i in enumerate(self.pattern.split(':')):
             if i == "*":
