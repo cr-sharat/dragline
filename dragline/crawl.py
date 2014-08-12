@@ -171,7 +171,7 @@ class Crawler:
                     except KeyboardInterrupt:
                         raise KeyboardInterrupt
                     except:
-                        self.logger.exception("Failed to execute callback on ")
+                        self.logger.exception("Failed to execute callback on %s", request)
                 except RequestError as e:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
