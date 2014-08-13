@@ -148,9 +148,10 @@ class Crawler:
         if check:
             if not self.allowed_urls_regex.match(request.url):
                 return
-            elif reqhash in self.url_set:
+            elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
                 return
-        self.url_set.add(reqhash)
+        if self.settings.UNIQUE_CHECK:
+            self.url_set.add(reqhash)
         self.url_queue.put(request)
         del request
 

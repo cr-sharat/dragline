@@ -99,6 +99,7 @@ class CrawlSettings(Settings):
     REDIS_URL = 'localhost'
     REDIS_PORT = 6379
     REDIS_DB = 1
+    UNIQUE_CHECK = True
 
 
 class SpiderSettings(Settings):
