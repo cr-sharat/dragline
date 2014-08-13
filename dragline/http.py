@@ -14,6 +14,7 @@ import socks
 from random import randint
 from .redisds import Dict
 import types
+import re
 
 socket.setdefaulttimeout(5)
 
@@ -52,6 +53,7 @@ class Request:
     retry = 0
     cookies = None
     callback_object = None
+    _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
     def __init__(self, url, method="GET", form_data=None, headers={}, callback=None, meta=None):
         self.url = url
@@ -110,16 +112,13 @@ class Request:
             start = time.time()
             timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
             number = randint(0, len(self.settings.PROXIES))
-
-            if number == 0:
-                http = httplib2.Http(
-                    cache=self.settings.CACHE, timeout=timeout)
-            else:
+            args = dict(disable_ssl_certificate_validation=True,
+                        cache=self.settings.CACHE, timeout=timeout)
+            if not number == 0:
                 ip = self.settings.PROXIES[number - 1][0]
                 proxy = self.settings.PROXIES[number - 1][1]
-                http = httplib2.Http(
-                    cache=self.settings.CACHE, timeout=timeout,
-                    proxy_info=httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, ip, proxy))
+                args['proxy_info'] = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, ip, proxy)
+            http = httplib2.Http(**args)
             req_headers = self.settings.HEADERS
             if self.settings.COOKIE:
                 if Request.cookies:
@@ -129,7 +128,9 @@ class Request:
                 self.url, self.method, form_data, req_headers)
 
             if "set-cookie" in headers:
-                Request.cookies = headers['set-cookie']
+                cookies = [i[0] for i in self._cookie_regex.findall(headers['set-cookie'])
+                           if i[1].lower() not in ['domain']]
+                Request.cookies = headers['Cookie'] = " ".join(cookies)
 
             res = Response(self.url, content, headers, self.meta)
             end = time.time()
