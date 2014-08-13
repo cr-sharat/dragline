@@ -122,8 +122,7 @@ class Crawler:
                 self.url_set.clear()
             else:
                 self.stats['status'] = 'stopped'
-        stats = dict(self.stats)
-        self.logger.info("%s", str(stats))
+        self.logger.info("%s", dict(self.stats))
 
     def completed(self):
         return len(self.runners) == 0
