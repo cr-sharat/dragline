@@ -1,15 +1,16 @@
 .. _parser:
 
 =========================
-settings
+Settings
 =========================
 
 This is the basic module for performing settings options.It allows us to alter the behavior of the workflows
 and even entire spider.According to the situation one should set the Request settings ,Log settings and Crawl settings.
 There are three main settings classes in defaultsettings module.We can discuss each of them here.
 
-1)RequestSettings 
-------------------
+-----------------
+RequestSettings 
+-----------------
 The main settings under Requestsettings are:
 
     * `AUTOTHROTTLE`_
@@ -94,8 +95,8 @@ by default
 
     MAX_REDIRECTS = 1
     
-
-2)Crawlsettings
+---------------
+Crawlsettings
 ---------------
 The main settings under Crawlsettings are:
     
@@ -152,8 +153,9 @@ It is the ID of the database which is used
 by default 
 
     REDIS_DB = 1
-    
-3)Spidersettings
+
+----------------
+Spidersettings
 ----------------
 The settings in this are:
 DB

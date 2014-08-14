@@ -74,14 +74,14 @@ to parse the contents of those pages to extract content.
 To create a Spider, you must create a class named Spider in main.py
 define the three main, mandatory, attributes:
 
-* :attr:`~Spider._name`: identifies the Spider. It must be
+* :attr:`~Spider.name`: identifies the Spider. It must be
   unique, that is, you can't set the same name for different Spiders.
 
-* :attr:`~Spider._start_url`: is a list of URLs where the
+* :attr:`~Spider.start`: is a list of Request where the
   Spider will begin to crawl from.  So, the first pages downloaded will be those
   listed here. The subsequent URLs will be generated successively from data
   contained in the start URLs.
-* :attr:`~Spider._allowed_urls_regex`: is a regex of the allowed urls through which the spider will move
+* :attr:`~Spider.allowed_domains`: is list of the allowed domains through which the spider will crawl
 
 * :meth:`~Spider.parse` is a method of the spider, which will
   be called with the downloaded :class:`Response` object of each
@@ -96,36 +96,38 @@ define the three main, mandatory, attributes:
 This is the code for our first Spider; save it in a file named
 ``main.py`` under the ``pydocs`` directory::
 
-  from dragline.htmlparser import HtmlParser
-  from dragline.http import Request
+    from dragline.htmlparser import HtmlParser
+    from dragline.http import Request
 
 
-  class Spider:
+    class Spider:
 
-      def __init__(self, conf):
-          self._name = "pydocs"
-          self._start = Request("https://docs.python.org/3/")
-          self._allowed_urls_regex = ".*"
-          self.conf = conf
+        def __init__(self, conf):
+            self.name = "pydocs"
+            self.start = Request("https://docs.python.org/3/")
+            self.allowed_domains = []
+            self.conf = conf
+            self.db = conf.DB
 
-      def parse(self, response):
-          html = HtmlParser(response)
-          table = html.find('.//table')
-          for url in table.extract_urls():
-              yield Request(url, callback="parse_group")
+        def parse(self, response):
+            html = HtmlParser(response)
+            table = html.find('.//table')
+            for url in table.extract_urls():
+                yield Request(url, callback="parse_group")
 
-      def parse_group(self, response):
-          html = HtmlParser(response)
-          for i in html.extract_urls('//a[@class="reference internal"]'):
-              yield Request(i, callback="parse_page")
+        def parse_group(self, response):
+            html = HtmlParser(response)
+            for i in html.extract_urls('//a[@class="reference internal"]'):
+                yield Request(i, callback="parse_page")
 
-      def parse_page(self, response):
-          html = HtmlParser(response)
-          page = {
-              'title': 'strip(//h1)',
-              'subtitles': ['strip(//h2)']
-          }
-          print html.extract(page)
+        def parse_page(self, response):
+            html = HtmlParser(response)
+            page = {
+                'title': 'strip(//h1)',
+                'subtitles': ['strip(//h2)']
+            }
+            print html.extract(page)
+
 
 Crawling
 --------
@@ -137,39 +139,17 @@ To put our spider to work, go to the project's top level directory and run::
 The ``dragline .`` command runs the spider for the ``docs.python.org`` domain. You
 will get an output similar to this::
 
-    .........
-    2014-06-12 14:57:30,492 [INFO] dragline: Processing GET:https://docs.python.org/3/reference/import.html
-    {'subtitles': [u'4.1. Getting and Installing MacPython\xb6',
-                  u'4.2. The IDE\xb6',
-                  u'4.3. Installing Additional Python Packages\xb6',
-                  u'4.4. GUI Programming on the Mac\xb6',
-                  u'4.5. Distributing Python Applications on the Mac\xb6',
-                  u'4.6. Other Resources\xb6'],
-    'title': u'4. Using Python on a Macintosh\xb6'}
-    2014-06-12 14:57:30,781 [INFO] dragline: Finished processing GET:https://docs.python.org/3/using/mac.html
-    2014-06-12 14:57:30,781 [INFO] dragline: Processing GET:https://docs.python.org/3/reference/datamodel.html
-    {'subtitles': [u'5.1. pyvenv - Creating virtual environments\xb6'],
-    'title': u'5. Additional Tools and Scripts\xb6'}
-    2014-06-12 14:57:32,312 [INFO] dragline: Finished processing GET:https://docs.python.org/3/using/scripts.html
-    2014-06-12 14:57:32,313 [INFO] dragline: Processing GET:https://docs.python.org/3/reference/compound_stmts.html
-    {'subtitles': [u'3.1. Installing Python\xb6',
-                  u'3.2. Alternative bundles\xb6',
-                  u'3.3. Configuring Python\xb6',
-                  u'3.4. Python Launcher for Windows\xb6',
-                  u'3.5. Additional modules\xb6',
-                  u'3.6. Compiling Python on Windows\xb6',
-                  u'3.7. Other resources\xb6'],
-    'title': u'3. Using Python on Windows\xb6'}
-    2014-06-12 14:57:33,267 [INFO] dragline: Finished processing GET:https://docs.python.org/3/using/windows.html
-    {'subtitles': [u'1.1. Command line\xb6', u'1.2. Environment variables\xb6'],
-    'title': u'1. Command line and environment\xb6'}
-    2014-06-12 14:57:33,283 [INFO] dragline: Finished processing GET:https://docs.python.org/3/using/cmdline.html
-    2014-06-12 14:57:33,283 [INFO] dragline: Processing GET:https://docs.python.org/3/reference/introduction.html
-    2014-06-12 14:57:33,284 [INFO] dragline: Processing GET:https://docs.python.org/3/reference/grammar.html
-    {'subtitles': [u'3.1. Objects, values and types\xb6',
-                  u'3.2. The standard type hierarchy\xb6',
-                  u'3.3. Special method names\xb6'],
-    'title': u'3. Data model\xb6'}
-    2014-06-12 14:57:34,926 [INFO] dragline: Finished processing GET:https://docs.python.org/3/reference/datamodel.html
+
+    2014-08-14 12:18:48,330 [INFO] pydocs: Starting spider {'status': 'running', 'start_time': '2014-08-14T06:48:48.329398+00:00   '}
+    {'subtitles': [u'2.1. Getting and installing the latest version of Python\xb6', u'2.2. Building Python\xb6', 
+    u'2.3. Python-related paths and files\xb6', u'2.4. Miscellaneous\xb6', u'2.5. Editors\xb6'], 'title': u'2. Using Python on Unix platforms\xb6'}
+    {'subtitles': [u'4.1. Getting and Installing MacPython\xb6', u'4.2. The IDE\xb6', u'4.3. Installing Additional Python Packages\xb6', 
+    u'4.4. GUI Programming on the Mac\xb6', u'4.5. Distributing Python Applications on the Mac\xb6', u'4.6. Other Resources\xb6'], 'title': u'4. Using Python on a Macintosh\xb6'}
+    {'subtitles': [u'5.1. pyvenv - Creating virtual environments\xb6'], 'title': u'5. Additional Tools and Scripts\xb6'}
+    {'subtitles': [u'3.1. Installing Python\xb6', u'3.2. Alternative bundles\xb6', u'3.3. Configuring Python\xb6', u'3.4. Python Launcher for Windows\xb6',
+    u'3.5. Additional modules\xb6', u'3.6. Compiling Python on Windows\xb6', u'3.7. Other resources\xb6'], 'title': u'3. Using Python on Windows\xb6'}
+    ^CKeyboardInterrupt
+    2014-08-14 12:18:53,638 [INFO] pydocs: {'status': 'stopped', 'start_time': '2014-08-14T06:48:48.329398+00:00', 'pages_crawled': 17,
+    'request_bytes': 647716, 'end_time': '2014-08-14T06:48:53.635639+00:00'}
 
 
