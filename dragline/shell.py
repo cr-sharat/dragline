@@ -43,14 +43,15 @@ def start_python_console(namespace=None, noipython=False, banner=''):
 
 
 def shelp():
+    repr_data = {k: repr(v) for k, v in data.iteritems()}
     intro = """\n[d] Available Dragline objects:
-    [d]   parser              %(parser)s
-    [d]   request           <%(request)s>
+    [d]   parser            %(parser)s
+    [d]   request           %(request)s
     [d]   response          %(response)s
     [d] Useful shortcuts: ## Override methods in Cmd object ##
     [d]   shelp()           Shell help (print this help)
     [d]   fetch(url)        Fetch request (or URL) and update local objects
-    [d]   view(response)    View response in a browser\n\n""" % data
+    [d]   view(response)    View response in a browser\n\n""" % repr_data
     print(intro)
 
 

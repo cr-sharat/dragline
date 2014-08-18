@@ -74,6 +74,8 @@ class Crawler:
         self.stats = redisds.Dict("stats:*", **redis_args)
         self.lock = BoundedSemaphore(1)
         self.running_count = 0
+        if not hasattr(spider, 'allowed_domains'):
+            spider.allowed_domains = []
         self.allowed_urls_regex = self.get_regex(spider.allowed_domains)
         self.spider = spider
         self.start()

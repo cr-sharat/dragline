@@ -82,6 +82,9 @@ class Request:
             d['callback'] = getattr(Request.callback_object, d['callback'])
         self.__dict__ = d
 
+    def __repr__(self):
+        return "<%s>" % self.get_unique_id(False)
+
     def __str__(self):
         return self.get_unique_id(False)
 
@@ -187,6 +190,7 @@ class Response:
     body = ""
     headers = {}
     meta = None
+    status = None
 
     def __init__(self, url=None, body=None, headers=None, meta=None):
         if url:
@@ -197,8 +201,16 @@ class Response:
             self.headers = headers
             if 'status' in headers:
                 self.status = headers['status']
+            if 'content-location' in headers:
+                self.url = headers['content-location']
         if meta:
             self.meta = meta
+
+    def __str__(self):
+        return "%s:%s" % (self.status, self.url)
+
+    def __repr__(self):
+        return "<%s>" % str(self)
 
     def __len__(self):
         if 'content-length' in self.headers:

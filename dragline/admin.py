@@ -55,7 +55,7 @@ def upload(url, username, password, foldername, spider_website=None):
     spider_object = spider(settings)
 
     try:
-        if spider_object.name and spider_object.start and spider_object.allowed_domains:
+        if spider_object.name and spider_object.start:
             spider_name = spider_object.name
         else:
             return "required attributes not found in spider"
