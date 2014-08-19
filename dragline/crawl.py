@@ -13,6 +13,8 @@ from uuid import uuid4
 from datetime import datetime
 from pytz import timezone
 import logging
+import sys
+import traceback
 import six
 try:
     from cStringIO import StringIO
@@ -172,15 +174,15 @@ class Crawler:
                                 self.insert(i)
                     except KeyboardInterrupt:
                         raise KeyboardInterrupt
-
                     except RequestError as e:
-                        
                         raise RequestError(e)
-
-
-
                     except:
-                        self.logger.exception("Failed to execute callback on %s", request)
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        msg = "Failed to execute callback on %s\n" % request
+                        msg += "Traceback (most recent call last):\n"
+                        msg += "".join(traceback.format_tb(exc_traceback)[1:])
+                        msg += "".join(traceback.format_exception_only(exc_type, exc_value))
+                        self.logger.error(msg.strip())
                 except RequestError as e:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
