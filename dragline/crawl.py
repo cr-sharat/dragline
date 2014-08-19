@@ -172,6 +172,13 @@ class Crawler:
                                 self.insert(i)
                     except KeyboardInterrupt:
                         raise KeyboardInterrupt
+
+                    except RequestError as e:
+                        
+                        raise RequestError(e)
+
+
+
                     except:
                         self.logger.exception("Failed to execute callback on %s", request)
                 except RequestError as e:
