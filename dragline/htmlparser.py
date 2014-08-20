@@ -1,7 +1,6 @@
 from lxml import html, etree
 from parslepy import Parselet
 from parslepy.funcs import xpathstrip, xpathtostring
-from six.moves.urllib.parse import urldefrag, urljoin
 from cssselect import HTMLTranslator
 import re
 
@@ -11,7 +10,7 @@ ns['strip'] = xpathstrip
 ns['str'] = xpathtostring
 
 
-def extract_urls(self, xpath=''):
+def extract_urls(self, xpath=None):
     urlpattern = re.compile(
         r'^(?:http)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -20,8 +19,9 @@ def extract_urls(self, xpath=''):
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     if xpath and not xpath.endswith('/'):
         xpath += '/'
-    return set(url.split('#')[0] for url in
-               self.xpath(xpath + "descendant-or-self::a/@href")
+    elif xpath is None:
+        xpath = ""
+    return set(url for url in self.xpath(xpath + "descendant-or-self::a/@href")
                if urlpattern.match(url))
 
 

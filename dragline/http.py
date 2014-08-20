@@ -1,6 +1,7 @@
 import six
 if six.PY2:
     from urllib import urlencode
+    from urlparse import urldefrag
 else:
     from urllib.parse import urlencode
 import socket
@@ -149,7 +150,7 @@ class Request:
         return res
 
     def get_unique_id(self, hashing=True):
-        request = self.method + ":" + self.url
+        request = self.method + ":" + urldefrag(self.url)[0]
         if self.form_data:
             request += ":" + urlencode(sorted(self.form_data.items(),
                                               key=operator.itemgetter(1)))
