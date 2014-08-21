@@ -123,6 +123,7 @@ class Request:
                 proxy = self.settings.PROXIES[number - 1][1]
                 args['proxy_info'] = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, ip, proxy)
             http = httplib2.Http(**args)
+            http.follow_all_redirects = True
             req_headers = self.settings.HEADERS
             if self.settings.COOKIE:
                 if Request.cookies:

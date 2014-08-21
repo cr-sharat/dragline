@@ -2,6 +2,7 @@ from dragline.http import Request
 from dragline.htmlparser import HtmlParser
 import argparse
 import webbrowser
+import tempfile
 
 data = {}
 
@@ -61,11 +62,16 @@ def fetch(murl):
     data["response"] = data["request"].send()
     data["parser"] = HtmlParser(data["response"])
     data["url"] = murl
+    shelp()
 
 
-def view():
-    global data
-    print(webbrowser.open(data["url"]))
+def view(response=None):
+    if response is None:
+        global data
+        response = data["response"]
+    f = tempfile.NamedTemporaryFile(suffix=".html", delete=False)
+    f.write(response.body)
+    print(webbrowser.open("file://" + f.name))
 
 data["fetch"] = fetch
 data["view"] = view
@@ -78,7 +84,6 @@ def execute():
         'url', action='store', default='', help='url')
     url = (parser.parse_args()).url
     fetch(url)
-    shelp()
     start_python_console(data)
 
 
