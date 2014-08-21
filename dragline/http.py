@@ -131,10 +131,10 @@ class Request:
             headers, content = http.request(
                 self.url, self.method, form_data, req_headers)
 
-            if "set-cookie" in headers:
+            if "set-cookie" in headers and not self.cookies:
                 cookies = [i[0] for i in self._cookie_regex.findall(headers['set-cookie'])
                            if i[1].lower() not in ['domain']]
-                Request.cookies = headers['Cookie'] = " ".join(cookies)
+                Request.cookies = " ".join(cookies)
 
             res = Response(self.url, content, headers, self.meta)
             end = time.time()

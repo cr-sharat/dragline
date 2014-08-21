@@ -50,7 +50,7 @@ html.HtmlElement.extract = extract
 html.HtmlElement.extract_urls = extract_urls
 
 
-def HtmlParser(response):
+def HtmlParser(response, absolute_links=True):
     """
     :param response:
     :type response: :class:`dragline.http.Response`
@@ -62,5 +62,6 @@ def HtmlParser(response):
     All the details of lxml object are discussed in section `lxml.html.HtmlElement`.
     """
     element = html.fromstring(response.body, response.url)
-    element.make_links_absolute()
+    if absolute_links:
+        element.make_links_absolute()
     return element
