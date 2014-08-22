@@ -20,8 +20,8 @@ class Spider:
             self.db = db.DB()
 
     def parse(self, response):
-        html = HtmlParser(response)
-        self.db.store_item('test', {'name': html.find('head/title').text})
+        parser = HtmlParser(response)
+        self.db.store_item('test', {'name': parser.find('head/title').text})
 
 
 if __name__ == '__main__':
