@@ -181,9 +181,9 @@ class Crawler:
                 except RequestError as e:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
-                        self.logger.warning("Rejecting %s", request)
+                        self.logger.warning("Rejecting %s", request, exc_info=True)
                     else:
-                        self.logger.debug("Retrying %s", request)
+                        self.logger.debug("Retrying %s", request, exc_info=True)
                         self.insert(request, False)
                 # except Exception as e:
                 # self.logger.exception('Failed to open the url %s', request)

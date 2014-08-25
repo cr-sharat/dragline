@@ -56,9 +56,15 @@ class Request:
     callback_object = None
     _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
-    def __init__(self, url, method="GET", form_data=None, headers={}, callback=None, meta=None):
-        self.url = url
+    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None):
+        if isinstance(url, str):
+            self.url = str(url)
+        elif isinstance(url, unicode):
+            self.url = unicode(url)
+        else:
+            AssertionError("Invalid url type")
         if method:
+            assert method in ['GET', 'POST', 'HEAD', 'PUT', 'DELETE'], 'INVALID METHOD'
             self.method = method
         if callback:
             self.callback = callback
