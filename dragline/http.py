@@ -29,7 +29,7 @@ class RequestError(Exception):
         return repr(self.value)
 
 
-class Request:
+class Request(object):
 
     """
     :param url: the URL of this request
@@ -175,7 +175,7 @@ class Request:
             cls.settings.MAX_DELAY)
 
 
-class Response:
+class Response(object):
 
     """
     This function is used to create user defined
