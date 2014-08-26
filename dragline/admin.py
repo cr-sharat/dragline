@@ -25,7 +25,7 @@ def zipdir(source, destination):
             for filename in files:
                 relname = os.path.join(path, filename)
                 absname = os.path.join(root, filename)
-                if filename.endswith(".py"):
+                if not filename.endswith(".pyc"):
                     zipf.write(absname, relname, zipfile.ZIP_DEFLATED)
 
 
