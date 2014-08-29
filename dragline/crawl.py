@@ -112,12 +112,15 @@ class Crawler:
             if request.callback is None:
                 request.callback = "parse"
             self.insert(request)
-        self.stats['status'] = "running"
-        self.stats['start_time'] = self.current_time()
+        if self.stats['status'] != "running":
+            self.stats['status'] = "running"
+            self.stats['start_time'] = self.current_time()
         self.logger.info("Starting spider %s", dict(self.stats))
 
     def clear(self, finished):
         self.runner.release()
+        if self.stats['status'] != "running":
+            return
         if self.completed():
             self.stats['end_time'] = self.current_time()
             if finished:
