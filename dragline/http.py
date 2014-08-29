@@ -17,7 +17,7 @@ from .redisds import Dict
 import types
 import re
 
-socket.setdefaulttimeout(5)
+socket.setdefaulttimeout(300)
 
 
 class RequestError(Exception):
