@@ -86,6 +86,8 @@ def deploy(serv_name, spider_dir):
         args = dict(parser.items(serv_name))
     except ConfigParser.NoSectionError:
         add_server(serv_name)
+        deploy(serv_name, spider_dir)
+        return
     args['foldername'] = spider_dir
     print upload(**args)
 
