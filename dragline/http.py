@@ -9,6 +9,7 @@ from hashlib import sha1
 import time
 import httplib2
 from .defaultsettings import RequestSettings
+import logging
 from collections import defaultdict
 import operator
 import socks
@@ -55,6 +56,7 @@ class Request(object):
     cookies = None
     callback_object = None
     _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
+    logger = logging.getLogger('dragline.request')
 
     def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None):
         if isinstance(url, str):
@@ -144,6 +146,7 @@ class Request(object):
                 Request.cookies = " ".join(cookies)
 
             res = Response(self.url, content, headers, self.meta)
+            self.logger.debug("Fetched %s", res)
             end = time.time()
 
             if not headers.fromcache and self.settings.AUTOTHROTTLE:

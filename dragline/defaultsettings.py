@@ -37,7 +37,7 @@ class LogSettings:
     }
     handlers = {
         'default': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'standard'
         },
@@ -57,12 +57,17 @@ class LogSettings:
     loggers = {
         '': {
             'handlers': ['default'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False
         },
         'dragline': {
             'handlers': ['default'],
             'level': 'INFO',
+            'propagate': False
+        },
+        'dragline.request': {
+            'handlers': ['default'],
+            'level': 'DEBUG',
             'propagate': False
         }
     }

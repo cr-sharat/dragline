@@ -52,7 +52,9 @@ class Crawler:
                           get('LOGGERS'))
         if hasattr(self.settings, 'NAMESPACE'):
             logger = log.getLogger(str(self.settings.NAMESPACE))
-            logger = logging.LoggerAdapter(logger, {"spider_name": spider.name})
+            data = {"spider_name": spider.name, 'run_id': str(self.settings.NAMESPACE)}
+            logger = logging.LoggerAdapter(logger, data)
+            Request.logger = logging.LoggerAdapter(log.getLogger('dragline.request'), data)
         else:
             logger = log.getLogger(spider.name)
         spider.logger = logger
@@ -166,7 +168,6 @@ class Crawler:
         while True:
             request = self.url_queue.get(timeout=2)
             if request:
-                self.logger.debug("Processing %s", request)
                 self.inc_count()
                 try:
                     response = request.send()
