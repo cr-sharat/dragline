@@ -61,7 +61,8 @@ def HtmlParser(response, absolute_links=True):
     HtmlParser function returns a lxml object of type HtmlElement which got few potential methods.
     All the details of lxml object are discussed in section `lxml.html.HtmlElement`.
     """
-    element = html.fromstring(response.body, response.url)
+    parser = etree.HTMLParser(recover=True, encoding='utf-8')
+    element = html.fromstring(response.body, response.url, parser)
     if absolute_links:
         element.make_links_absolute()
     return element
