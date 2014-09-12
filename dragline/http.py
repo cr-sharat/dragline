@@ -54,9 +54,10 @@ class Request(object):
     retry = 0
     cookies = None
     callback_object = None
+    dontfilter = False
     _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
-    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None):
+    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None, dontfilter=None):
         if isinstance(url, str):
             self.url = str(url)
         elif isinstance(url, unicode):
@@ -75,6 +76,8 @@ class Request(object):
                               for k, v in dict(form_data).items()}
         if headers:
             self.headers = headers
+        if dontfilter:
+            dontfilter = True
 
     def __getstate__(self):
         d = self.__dict__.copy()

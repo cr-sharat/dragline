@@ -153,11 +153,13 @@ class Crawler:
             return
         reqhash = request.get_unique_id()
         if check:
+            check = not request.dontfilter
+        if check:
             if not self.allowed_urls_regex.match(request.url):
                 return
             elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
                 return
-        if self.settings.UNIQUE_CHECK:
+        if self.settings.UNIQUE_CHECK and check:
             self.url_set.add(reqhash)
         self.url_queue.put(request)
         del request
