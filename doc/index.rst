@@ -46,6 +46,7 @@ Contents
 .. toctree::
     http
     parser
+    shell
     settings
 
 
