@@ -19,7 +19,7 @@ In this tutorial we are going to build custom spider,this is a single illustrati
 Dragline encapsulate much power in its functionality.First task of the Dragline is to provide
 a common framework to build  different spiders.
 
-We are going to use `Open directory project (Python Docs) <https://docs.python.org/3/>`_ as
+We are going to use `Python 3 Docs <https://docs.python.org/3/>`_ as
 our example domain to crawl.
 
 This tutorial will walk you through these tasks:

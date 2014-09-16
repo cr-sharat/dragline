@@ -102,12 +102,11 @@ parse_obj.
 
 will fetch you all the links from the div tag of html where class is 'product'
 
-.. method:: extract_text(xpath_expr)
+.. method:: extract_text()
 
-This function grabs all the text from the web page that specified.xpath is an optional
-argument.If specified the text obtained will  be committed to condition in xpath expression.
+This function grabs all the text from current dom element .
 
-    >>> parse_obj.extract_text('//html')
+    >>> parse_obj.extract_text()
 
 
 

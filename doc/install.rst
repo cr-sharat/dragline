@@ -20,7 +20,7 @@ Installing Dragline
 
 To install using pip::
 
-    sudo pip install dragline
+    sudo pip install --pre dragline
 
 
 .. _Python: http://www.python.org

@@ -115,7 +115,9 @@ class Crawler:
         if self.stats['status'] != "running":
             self.stats['status'] = "running"
             self.stats['start_time'] = self.current_time()
-        self.logger.info("Starting spider %s", dict(self.stats))
+            self.logger.info("Starting spider %s", dict(self.stats))
+        else:
+            self.logger.info("Supporting %s", dict(self.stats))
 
     def clear(self, finished):
         self.runner.release()

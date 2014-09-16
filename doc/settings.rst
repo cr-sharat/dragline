@@ -1,4 +1,4 @@
-.. _parser:
+.. _settings:
 
 =========================
 Settings
