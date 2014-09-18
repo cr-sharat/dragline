@@ -8,17 +8,18 @@ import re
 class HtmlParserTest(unittest.TestCase):
 
     def setUp(self):
-        res = http.Response('http://norvig.com/', data.hstring)
-        self.html = htmlparser.HtmlParser(res)
+        pass
 
     def test_links(self):
+        res = http.Request('http://httpbin.org/links/10').send()
+        html = htmlparser.HtmlParser(res)
         urlpattern = re.compile(
             'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-        urls = self.html.extract_urls()
+        urls = html.extract_urls()
         for url in urls:
             if not urlpattern.match(url):
                 self.fail('Invalid url')
-        self.assertEqual(len(urls), 86)
+        self.assertEqual(len(urls), 9)
 
     def test_gettext(self):
         self.assertTrue(True)

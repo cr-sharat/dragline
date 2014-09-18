@@ -7,7 +7,7 @@ else:
 import socket
 from hashlib import sha1
 import time
-import httplib2
+import requests
 from .defaultsettings import RequestSettings
 from collections import defaultdict
 import operator
@@ -55,15 +55,22 @@ class Request(object):
     cookies = None
     callback_object = None
     dontfilter = False
+    session = requests.Session()
+    timeout = None
+    proxy = []
     _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
-    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None, dontfilter=None):
+    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None,
+                 cookies=None, proxy=None, timeout=None, dontfilter=None):
         if isinstance(url, str):
             self.url = str(url)
         elif isinstance(url, unicode):
             self.url = unicode(url)
         else:
             AssertionError("Invalid url type")
+        if form_data:
+            self.method = 'POST'
+            self.form_data = form_data
         if method:
             assert method in ['GET', 'POST', 'HEAD', 'PUT', 'DELETE'], 'INVALID METHOD'
             self.method = method
@@ -71,13 +78,16 @@ class Request(object):
             self.callback = callback
         if meta:
             self.meta = meta
-        if form_data:
-            self.form_data = {str(k): str(v)
-                              for k, v in dict(form_data).items()}
         if headers:
             self.headers = headers
+        if proxy:
+            self.proxy = proxy
+        if cookies:
+            self.cookies = cookies
         if dontfilter:
             dontfilter = True
+        if timeout:
+            self.timeout = timeout
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -120,37 +130,25 @@ class Request(object):
 
         """
 
-        form_data = urlencode(self.form_data) if self.form_data else None
         try:
-            start = time.time()
-            timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
-            number = randint(0, len(self.settings.PROXIES))
-            args = dict(disable_ssl_certificate_validation=True,
-                        cache=self.settings.CACHE, timeout=timeout)
-            if not number == 0:
-                ip = self.settings.PROXIES[number - 1][0]
-                proxy = self.settings.PROXIES[number - 1][1]
-                args['proxy_info'] = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, ip, proxy)
-            http = httplib2.Http(**args)
-            http.follow_all_redirects = True
-            req_headers = self.settings.HEADERS
-            if self.settings.COOKIE:
-                if Request.cookies:
-                    req_headers.update({'Cookie': Request.cookies})
-            req_headers.update(self.headers)
-            headers, content = http.request(
-                self.url, self.method, form_data, req_headers)
+            if self.timeout:
+                timeout = self.timeout
+            else:
+                timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
+            proxy_choice = randint(0, len(self.settings.PROXIES))
+            args = dict(url=self.url, method=self.method, data=self.form_data,
+                        verify=False, timeout=timeout, cookies=self.cookies)
+            if len(self.proxy) > 0:
+                args['proxies'] = {"http": "http://%s:%s" % self.proxy}
+            elif not proxy_choice == 0:
+                proxy = self.settings.PROXIES[proxy_choice - 1]
+                args['proxies'] = {"http": "http://%s:%s" % proxy}
+            args['headers'] = self.settings.HEADERS
+            args['headers'].update(self.headers)
+            res = Response(self.session.request(**args))
 
-            if "set-cookie" in headers and not self.cookies:
-                cookies = [i[0] for i in self._cookie_regex.findall(headers['set-cookie'])
-                           if i[1].lower() not in ['domain']]
-                Request.cookies = " ".join(cookies)
-
-            res = Response(self.url, content, headers, self.meta)
-            end = time.time()
-
-            if not headers.fromcache and self.settings.AUTOTHROTTLE:
-                self.updatedelay(end, start)
+            if self.settings.AUTOTHROTTLE:
+                self.updatedelay(res.elapsed)
                 time.sleep(self.settings.DELAY)
         except Exception as e:
             raise RequestError(e.message)
@@ -170,19 +168,18 @@ class Request(object):
             return request
 
     @classmethod
-    def updatedelay(cls, end, start):
-        delay = end - start
+    def updatedelay(cls, delay):
         cls.settings.DELAY = min(
             max(cls.settings.MIN_DELAY, delay,
                 (cls.settings.DELAY + delay) / 2.0),
             cls.settings.MAX_DELAY)
 
 
-class Response(object):
+class Response(requests.Response):
 
     """
     This function is used to create user defined
-    respones to test your spider and also in many
+    response to test your spider and also in many
     other cases.
 
     :param url: the URL of this response
@@ -204,25 +201,12 @@ class Response(object):
     meta = None
     status = None
 
-    def __init__(self, url=None, body=None, headers=None, meta=None):
-        if url:
-            self.url = url
-        if body:
-            self.body = body
-        if headers:
-            self.headers = headers
-            if 'status' in headers:
-                self.status = headers['status']
-            if 'content-location' in headers:
-                self.url = headers['content-location']
+    def __init__(self, response, meta=None):
+        self.__dict__ = response.__dict__
+        self.body = self.content
+        self.status = self.status_code
         if meta:
             self.meta = meta
-
-    def __str__(self):
-        return "%s:%s" % (self.status, self.url)
-
-    def __repr__(self):
-        return "<%s>" % str(self)
 
     def __len__(self):
         if 'content-length' in self.headers:
