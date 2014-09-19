@@ -1,7 +1,6 @@
 from dragline import http
 from dragline import htmlparser
 import unittest
-import data
 import re
 
 

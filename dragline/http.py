@@ -85,7 +85,7 @@ class Request(object):
         if cookies:
             self.cookies = cookies
         if dontfilter:
-            dontfilter = True
+            self.dontfilter = True
         if timeout:
             self.timeout = timeout
 
@@ -139,10 +139,14 @@ class Request(object):
             args = dict(url=self.url, method=self.method, data=self.form_data,
                         verify=False, timeout=timeout, cookies=self.cookies)
             if len(self.proxy) > 0:
-                args['proxies'] = {"http": "http://%s:%s" % self.proxy}
+                proxy = self.proxy
             elif not proxy_choice == 0:
                 proxy = self.settings.PROXIES[proxy_choice - 1]
-                args['proxies'] = {"http": "http://%s:%s" % proxy}
+            else:
+                proxy = None
+            if proxy:
+                pattern = "http://%s:%s" if len(proxy) == 2 else "http://%s:%s@%s:%s"
+                args['proxies'] = {"http": pattern % proxy}
             args['headers'] = self.settings.HEADERS
             args['headers'].update(self.headers)
             res = Response(self.session.request(**args))

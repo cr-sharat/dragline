@@ -38,7 +38,7 @@ class RequestTest(unittest.TestCase):
         self.assertEqual(httpbin('get'), response.json()['url'])
 
     #def test_proxy(self):
-        #request = Request(httpbin('/ip'), proxy=(ip, port))
+        #request = Request(httpbin('/ip'), proxy=('user', 'password', 'ip', 'port'))
         #response = request.send()
         #print response.json()
 
