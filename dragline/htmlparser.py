@@ -62,7 +62,10 @@ def HtmlParser(response, absolute_links=True):
     All the details of lxml object are discussed in section `lxml.html.HtmlElement`.
     """
     parser = html.HTMLParser(recover=True, encoding='utf-8')
-    element = html.fromstring(response.body, response.url, parser)
-    if absolute_links:
-        element.make_links_absolute()
+    if isinstance(response, basestring):
+        element = html.fromstring(response, None, parser)
+    else:
+        element = html.fromstring(response.body, response.url, parser)
+        if absolute_links:
+            element.make_links_absolute()
     return element

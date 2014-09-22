@@ -44,22 +44,24 @@ def start_python_console(namespace=None, noipython=False, banner=''):
 def shelp():
     repr_data = {k: repr(v) for k, v in data.iteritems()}
     intro = """\n[d] Available Dragline objects:
-    [d]   parser            %(parser)s
-    [d]   request           %(request)s
-    [d]   response          %(response)s
+    [d]   parser                 %(parser)s
+    [d]   request                %(request)s
+    [d]   response               %(response)s
     [d] Useful shortcuts: ## Override methods in Cmd object ##
-    [d]   shelp()           Shell help (print this help)
-    [d]   fetch(url)        Fetch request (or URL) and update local objects
-    [d]   view(response)    View response in a browser\n\n""" % repr_data
+    [d]   shelp()                Shell help (print this help)
+    [d]   fetch(req_or_url)      Fetch request (or URL) and update local objects
+    [d]   view(response=None)    View response in a browser\n\n""" % repr_data
     print(intro)
 
 
-def fetch(murl):
+def fetch(req_or_url):
     global data
-    data["request"] = Request(murl)
+    if isinstance(req_or_url, Request):
+        data["request"] = req_or_url
+    else:
+        data["request"] = Request(req_or_url)
     data["response"] = data["request"].send()
     data["parser"] = HtmlParser(data["response"])
-    data["url"] = murl
     shelp()
 
 
