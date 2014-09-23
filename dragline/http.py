@@ -1,9 +1,4 @@
-import six
-if six.PY2:
-    from urllib import urlencode
-    from urlparse import urldefrag
-else:
-    from urllib.parse import urlencode
+from requests.compat import urlencode, urldefrag
 import socket
 from hashlib import sha1
 import time

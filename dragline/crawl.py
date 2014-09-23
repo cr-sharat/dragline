@@ -14,12 +14,10 @@ from datetime import datetime
 from pytz import timezone
 import logging
 import sys
-import traceback
-import six
 try:
     from cStringIO import StringIO
 except ImportError:
-    from six import StringIO
+    from requests.compat import StringIO
 
 
 class Pickle():
