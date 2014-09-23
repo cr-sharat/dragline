@@ -6,7 +6,7 @@ import requests
 from .defaultsettings import RequestSettings
 from collections import defaultdict
 import operator
-from random import randint
+import random
 from .redisds import Dict
 import types
 import re
@@ -137,18 +137,17 @@ class Request(object):
                 timeout = self.timeout
             else:
                 timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
-            proxy_choice = randint(0, len(self.settings.PROXIES))
             args = dict(url=self.url, method=self.method, data=self.form_data,
                         verify=False, timeout=timeout, cookies=self.cookies)
             if len(self.proxy) > 0:
                 proxy = self.proxy
-            elif not proxy_choice == 0:
-                proxy = self.settings.PROXIES[proxy_choice - 1]
+            elif len(self.settings.PROXIES) > 0:
+                proxy = random.choice(self.settings.PROXIES)
             else:
                 proxy = None
             if proxy:
                 pattern = "http://%s:%s" if len(proxy) == 2 else "http://%s:%s@%s:%s"
-                args['proxies'] = {"http": pattern % proxy}
+                args['proxies'] = {"http": pattern % proxy, "https": pattern % proxy}
             args['headers'] = self.settings.HEADERS
             args['headers'].update(self.headers)
             res = Response(self.session.request(**args))
