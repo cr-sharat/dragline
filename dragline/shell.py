@@ -2,7 +2,6 @@ from dragline.http import Request
 from dragline.htmlparser import HtmlParser
 import argparse
 from lxml.html import open_in_browser
-data = {}
 
 
 def start_python_console(namespace=None, noipython=False, banner=''):
@@ -71,9 +70,11 @@ def view(response=None):
         response = data["response"]
     open_in_browser(HtmlParser(response), 'utf-8')
 
+data = {}
 data["fetch"] = fetch
 data["view"] = view
 data["shelp"] = shelp
+data["Request"] = Request
 
 
 def execute():
