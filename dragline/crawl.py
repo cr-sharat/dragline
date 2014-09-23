@@ -153,7 +153,7 @@ class Crawler:
     def insert(self, request, check=True):
         if not isinstance(request, Request):
             return
-        reqhash = request.get_unique_id()
+        reqhash = request.get_unique_id(True)
         if check:
             check = not request.dontfilter
         if check:

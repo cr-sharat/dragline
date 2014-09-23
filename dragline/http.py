@@ -57,11 +57,12 @@ class Request(object):
     dontfilter = False
     session = requests.Session()
     timeout = None
+    fromcache = True
     proxy = []
     _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
     def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None,
-                 cookies=None, proxy=None, timeout=None, dontfilter=None):
+                 cookies=None, proxy=None, timeout=None, dontfilter=None, fromcache=None):
         if isinstance(url, str):
             self.url = str(url)
         elif isinstance(url, unicode):
@@ -88,6 +89,8 @@ class Request(object):
             self.dontfilter = True
         if timeout:
             self.timeout = timeout
+        if fromcache:
+            self.fromcache = fromcache
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -103,10 +106,10 @@ class Request(object):
         self.__dict__ = d
 
     def __repr__(self):
-        return "<%s>" % self.get_unique_id(False)
+        return "<%s>" % self.get_unique_id()
 
     def __str__(self):
-        return self.get_unique_id(False)
+        return self.get_unique_id()
 
     def __usha1(self, x):
         """sha1 with unicode support"""
@@ -131,6 +134,11 @@ class Request(object):
         """
 
         try:
+            if self.fromcache and self.settings.CACHE:
+                cache = self.settings.CACHE[self.get_unique_id()]
+                if cache is not None:
+                    cache.fromcache = True
+                    return cache
             if self.timeout:
                 timeout = self.timeout
             else:
@@ -150,6 +158,8 @@ class Request(object):
             args['headers'] = self.settings.HEADERS
             args['headers'].update(self.headers)
             res = Response(self.session.request(**args))
+            if self.settings.CACHE:
+                self.settings.CACHE[self.get_unique_id()] = res
 
             if self.settings.AUTOTHROTTLE:
                 self.updatedelay(res.elapsed)
@@ -161,7 +171,7 @@ class Request(object):
             self.stats.inc('request_bytes', len(res))
         return res
 
-    def get_unique_id(self, hashing=True):
+    def get_unique_id(self, hashing=False):
         request = self.method + ":" + urldefrag(self.url)[0]
         if self.form_data:
             request += ":" + urlencode(sorted(self.form_data.items(),
@@ -199,20 +209,24 @@ class Response(requests.Response):
     :type meta: dict
 
     """
-    url = None
-    body = ""
-    headers = {}
     meta = None
-    status = None
+    fromcache = False
 
-    def __init__(self, response, meta=None):
-        self.__dict__ = response.__dict__
-        self.body = self.content
-        self.status = self.status_code
+    def __init__(self, response=requests.Response(), meta=None):
+        if isinstance(response, requests.Response):
+            self.__dict__ = response.__dict__
         if meta:
             self.meta = meta
 
     def __len__(self):
         if 'content-length' in self.headers:
             return int(self.headers['content-length'])
-        return len(self.body)
+        return len(self.text)
+
+    @property
+    def body(self):
+        return self.text
+
+    @property
+    def status(self):
+        return self.status_code
