@@ -6,7 +6,6 @@ import requests
 from .defaultsettings import RequestSettings
 from collections import defaultdict
 import operator
-import socks
 from random import randint
 from .redisds import Dict
 import types
