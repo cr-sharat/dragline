@@ -54,6 +54,11 @@ class RequestTest(unittest.TestCase):
         request = Request(httpbin('delay', '3'), timeout=1)
         self.assertRaises(RequestError, request.send)
 
+    def test_meta(self):
+        meta = {'name': 'dragline'}
+        response = Request(httpbin('get'), meta=meta).send()
+        self.assertEqual(meta, response.meta)
+
     def test_unique(self):
         req1 = Request("http://www.google.com", method="POST",
                        form_data={"test1": "abcd", "abcd": "test1"})

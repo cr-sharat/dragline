@@ -150,7 +150,7 @@ class Request(object):
                 args['proxies'] = {"http": pattern % proxy, "https": pattern % proxy}
             args['headers'] = self.settings.HEADERS
             args['headers'].update(self.headers)
-            res = Response(self.session.request(**args))
+            res = Response(self.session.request(**args), self.meta)
             if self.settings.CACHE:
                 self.settings.CACHE[self.get_unique_id()] = res
 
