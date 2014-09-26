@@ -5,7 +5,7 @@ from dragline.defaultsettings import LogSettings
 class LogTest(unittest.TestCase):
 
     def test_loggers(self):
-        log = LogSettings(loggers={'test': {'handlers': ['info_file']}})
+        log = LogSettings(loggers={'test': {'handlers': ['default']}})
         testlogger = log.getLogger('test')
         self.assertEqual(len(testlogger.handlers), 1)
 
