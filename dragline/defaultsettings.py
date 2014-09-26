@@ -39,18 +39,6 @@ class LogSettings:
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'standard'
-        },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'formatter': 'standard',
-            'filename': 'error.log'
-        },
-        'info_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'formatter': 'standard',
-            'filename': 'info.log'
         }
     }
     loggers = {
