@@ -62,7 +62,7 @@ class Request(object):
         elif isinstance(url, unicode):
             self.url = unicode(url)
         else:
-            AssertionError("Invalid url type")
+            raise AssertionError("Invalid url type")
         if form_data:
             self.method = 'POST'
             self.form_data = form_data
