@@ -42,12 +42,17 @@ def css(self, expr):
     return self.xpath(self.cssselect(expr))
 
 
+def html_content(self, pretty_print=False):
+    return html.tostring(self, pretty_print, encoding='utf-8')
+
+
 html.HtmlElement.extract_text = extract_text
 html.HtmlElement._css_translator = HTMLTranslator()
 html.HtmlElement.cssselect = cssselect
 html.HtmlElement.css = css
 html.HtmlElement.extract = extract
 html.HtmlElement.extract_urls = extract_urls
+html.HtmlElement.html = html_content
 
 
 def HtmlParser(response, absolute_links=True):
