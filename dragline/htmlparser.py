@@ -70,7 +70,7 @@ def HtmlParser(response, absolute_links=True):
     if isinstance(response, basestring):
         element = html.fromstring(response, None, parser)
     else:
-        element = html.fromstring(response.body, response.url, parser)
+        element = html.fromstring(response.content, response.url, parser)
         if absolute_links:
             element.make_links_absolute()
     return element

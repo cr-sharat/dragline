@@ -2,6 +2,7 @@ from dragline.http import Request
 from dragline.htmlparser import HtmlParser
 import argparse
 from lxml.html import open_in_browser
+from collections import defaultdict
 
 
 def start_python_console(namespace=None, noipython=False, banner=''):
@@ -41,7 +42,7 @@ def start_python_console(namespace=None, noipython=False, banner=''):
 
 
 def shelp():
-    repr_data = {k: repr(v) for k, v in data.iteritems()}
+    repr_data = defaultdict(lambda: None, {k: repr(v) for k, v in data.iteritems()})
     intro = """\n[d] Available Dragline objects:
     [d]   parser                 %(parser)s
     [d]   request                %(request)s
@@ -55,12 +56,23 @@ def shelp():
 
 def fetch(req_or_url):
     global data
+    if not req_or_url:
+        shelp()
+        return
     if isinstance(req_or_url, Request):
         data["request"] = req_or_url
     else:
         data["request"] = Request(req_or_url)
-    data["response"] = data["request"].send()
-    data["parser"] = HtmlParser(data["response"])
+    try:
+        data["response"] = data["request"].send()
+    except:
+        data["response"] = None
+        print("Failed to fetch")
+    try:
+        data["parser"] = HtmlParser(data["response"])
+    except:
+        data["parser"] = None
+        print("Failed to parse response")
     shelp()
 
 
@@ -70,17 +82,14 @@ def view(response=None):
         response = data["response"]
     open_in_browser(HtmlParser(response), 'utf-8')
 
-data = {}
-data["fetch"] = fetch
-data["view"] = view
-data["shelp"] = shelp
-data["Request"] = Request
+data = {"fetch": fetch, "view": view, "shelp": shelp,
+        "Request": Request, 'parser': None, 'response': None,
+        'request': None}
 
 
 def execute():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'url', action='store', default='', help='url')
+    parser.add_argument('url', action='store', default='', help='url', nargs='?')
     url = (parser.parse_args()).url
     fetch(url)
     start_python_console(data)
@@ -88,4 +97,3 @@ def execute():
 
 if __name__ == "__main__":
     execute()
-

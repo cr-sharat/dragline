@@ -214,11 +214,11 @@ class Response(requests.Response):
     def __len__(self):
         if 'content-length' in self.headers:
             return int(self.headers['content-length'])
-        return len(self.text)
+        return len(self.content)
 
     @property
     def body(self):
-        return self.text
+        return self.content
 
     @property
     def status(self):
