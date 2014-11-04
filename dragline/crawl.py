@@ -156,6 +156,8 @@ class Crawler:
             check = not request.dontfilter
         if check:
             if not self.allowed_urls_regex.match(request.url):
+                self.logger.warning('url regex(%s) validation failed for %s',
+                                    self.allowed_urls_regex.pattern, request.url)
                 return
             elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
                 return
