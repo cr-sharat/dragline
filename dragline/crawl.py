@@ -167,7 +167,7 @@ class Crawler:
         del request
 
     def process_url(self):
-        while True:
+        while self.stats['status'] == "running":
             request = self.url_queue.get(timeout=2)
             if request:
                 self.logger.debug("Processing %s", request)

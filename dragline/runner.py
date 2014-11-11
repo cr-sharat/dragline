@@ -28,8 +28,9 @@ def load_modules(path, spiderfile="main", settingsfile="settings"):
 
 def main(spider_class, settings_module):
     crawler = Crawler(spider_class, settings_module)
+    threads = crawler.settings.THREADS
     try:
-        joinall([spawn(crawler.process_url) for i in xrange(5)])
+        joinall([spawn(crawler.process_url) for i in xrange(threads)])
     except KeyboardInterrupt:
         crawler.clear(False)
     except:

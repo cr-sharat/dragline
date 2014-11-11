@@ -87,6 +87,7 @@ class CrawlSettings(Settings):
     REDIS_PORT = 6379
     REDIS_DB = 1
     UNIQUE_CHECK = True
+    THREADS = 5
 
 
 class SpiderSettings(Settings):
