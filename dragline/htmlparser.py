@@ -66,7 +66,8 @@ def HtmlParser(response, absolute_links=True):
     HtmlParser function returns a lxml object of type HtmlElement which got few potential methods.
     All the details of lxml object are discussed in section `lxml.html.HtmlElement`.
     """
-    parser = html.HTMLParser(recover=True, encoding='utf-8')
+    encoding = response.encoding if hasattr(response, 'encoding') else 'utf-8'
+    parser = html.HTMLParser(recover=True, encoding=encoding)
     if isinstance(response, basestring):
         element = html.fromstring(response, None, parser)
     else:
