@@ -53,7 +53,6 @@ class Request(object):
     timeout = None
     fromcache = True
     proxy = []
-    _cookie_regex = re.compile('(([^ =]*)?=[^ =]*?;)')
 
     def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None,
                  cookies=None, proxy=None, timeout=None, dontfilter=None, fromcache=None):
