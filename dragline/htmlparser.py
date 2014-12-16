@@ -3,6 +3,7 @@ from parslepy import Parselet
 from parslepy.funcs import xpathstrip, xpathtostring
 from cssselect import HTMLTranslator
 import re
+from urlparse import urlsplit
 
 
 ns = etree.FunctionNamespace(None)
@@ -10,49 +11,69 @@ ns['strip'] = xpathstrip
 ns['str'] = xpathtostring
 
 
-def extract_urls(self, xpath=None):
-    urlpattern = re.compile(
-        r'^(?:http)s?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    if xpath and not xpath.endswith('/'):
-        xpath += '/'
-    elif xpath is None:
-        xpath = ""
-    return set(url for url in self.xpath(xpath + "descendant-or-self::a/@href")
-               if urlpattern.match(url))
+class HTMLElement(html.HtmlMixin):
+
+    def extract_urls(self, xpath=None, domains=None):
+        if xpath and not xpath.endswith('/'):
+            xpath += '/'
+        elif xpath is None:
+            xpath = ""
+        for url in map(urlsplit, set(self.xpath(xpath + "descendant-or-self::a/@href"))):
+            if url.scheme in ['http', 'https'] and url.hostname:
+                if domains and url.hostname not in domains:
+                    continue
+                yield url.geturl()
+
+    def extract_text(self):
+        return "".join(i.strip() for i in self.itertext())
+
+    def css(self, expr):
+        return self.xpath(self.cssselect(expr))
+
+    def html_content(self, pretty_print=False):
+        return html.tostring(self, pretty_print, encoding=unicode)
 
 
-def extract_text(self):
-    return "".join(i.strip() for i in self.itertext())
+class HtmlComment(etree.CommentBase, HTMLElement):
+    pass
 
 
-def extract(self, rules, strict=False):
-    parselet = Parselet(rules, strict=strict)
-    return parselet.extract(self)
+class HtmlElement(etree.ElementBase, HTMLElement):
+    pass
 
 
-def cssselect(self, expr):
-    return self._css_translator.css_to_xpath(expr)
+class HtmlProcessingInstruction(etree.PIBase, HTMLElement):
+    pass
 
 
-def css(self, expr):
-    return self.xpath(self.cssselect(expr))
+class HtmlEntity(etree.EntityBase, HTMLElement):
+    pass
 
 
-def html_content(self, pretty_print=False):
-    return html.tostring(self, pretty_print, encoding='utf-8')
+class HtmlElementClassLookup(html.HtmlElementClassLookup):
+
+    def lookup(self, node_type, document, namespace, name):
+        if node_type == 'element':
+            return self._element_classes.get(name.lower(), HtmlElement)
+        elif node_type == 'comment':
+            return HtmlComment
+        elif node_type == 'PI':
+            return HtmlProcessingInstruction
+        elif node_type == 'entity':
+            return HtmlEntity
+        # Otherwise normal lookup
+        return None
 
 
-html.HtmlElement.extract_text = extract_text
-html.HtmlElement._css_translator = HTMLTranslator()
-html.HtmlElement.cssselect = cssselect
-html.HtmlElement.css = css
-html.HtmlElement.extract = extract
-html.HtmlElement.extract_urls = extract_urls
-html.HtmlElement.html = html_content
+class HTMLParser(etree.HTMLParser):
+
+    """An HTML parser that is configured to return lxml.html Element
+    objects.
+    """
+
+    def __init__(self, **kwargs):
+        super(HTMLParser, self).__init__(**kwargs)
+        self.set_element_class_lookup(HtmlElementClassLookup())
 
 
 def HtmlParser(response, absolute_links=True):
@@ -67,7 +88,7 @@ def HtmlParser(response, absolute_links=True):
     All the details of lxml object are discussed in section `lxml.html.HtmlElement`.
     """
     encoding = response.encoding if hasattr(response, 'encoding') else 'utf-8'
-    parser = html.HTMLParser(recover=True, encoding=encoding)
+    parser = HTMLParser(recover=True, encoding=encoding)
     if isinstance(response, basestring):
         element = html.fromstring(response, None, parser)
     else:

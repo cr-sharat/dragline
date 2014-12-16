@@ -14,6 +14,7 @@ from datetime import datetime
 from pytz import timezone
 import logging
 import sys
+from requests.compat import urlsplit
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -76,19 +77,8 @@ class Crawler:
         self.running_count = 0
         if not hasattr(spider, 'allowed_domains'):
             spider.allowed_domains = []
-        self.allowed_urls_regex = self.get_regex(spider.allowed_domains)
         self.spider = spider
         self.start()
-
-    def get_regex(self, domains):
-        default = (r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-                   r'localhost|'  # localhost...
-                   r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-                   r'(?::\d+)?')
-        domain_regex = r'(%s)' % '|'.join(domains) if len(domains) else default
-        url_regex = r'^https?://%s(?:/?|[/?]\S+)$' % domain_regex
-        regex = re.compile(url_regex, re.IGNORECASE)
-        return regex
 
     def current_time(self):
         tz = timezone(self.settings.TIME_ZONE)
@@ -151,13 +141,16 @@ class Crawler:
     def insert(self, request, check=True):
         if not isinstance(request, Request):
             return
+        url = urlsplit(request.url)
+        if url.scheme in ['http', 'https'] and url.hostname:
+            self.logger.warning('invalid url %s', url.geturl())
+            return
         reqhash = request.get_unique_id(True)
         if check:
             check = not request.dontfilter
         if check:
-            if not self.allowed_urls_regex.match(request.url):
-                self.logger.warning('url regex(%s) validation failed for %s',
-                                    self.allowed_urls_regex.pattern, request.url)
+            if self.spider.allowed_domains and url.hostname not in self.spider.allowed_domains:
+                self.logger.warning('domain %s not in %s', url.hostname, str(self.spider.allowed_domains))
                 return
             elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
                 return

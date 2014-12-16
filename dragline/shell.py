@@ -80,7 +80,7 @@ def view(response=None):
     if response is None:
         global data
         response = data["response"]
-    open_in_browser(HtmlParser(response), 'utf-8')
+    open_in_browser(HtmlParser(response), response.encoding)
 
 data = {"fetch": fetch, "view": view, "shelp": shelp,
         "Request": Request, 'parser': None, 'response': None,

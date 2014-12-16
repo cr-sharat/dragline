@@ -3,8 +3,8 @@ import socket
 from hashlib import sha1
 import time
 import requests
+from requests.structures import CaseInsensitiveDict
 from .defaultsettings import RequestSettings
-from collections import defaultdict
 import operator
 import random
 from .redisds import Dict
@@ -164,10 +164,10 @@ class Request(object):
         return res
 
     def get_unique_id(self, hashing=False):
-        request = self.method + ":" + urldefrag(self.url)[0]
+        request = [self.method, urldefrag(self.url)[0]]
         if self.form_data:
-            request += ":" + urlencode(sorted(self.form_data.items(),
-                                              key=operator.itemgetter(1)))
+            request.append(self._encode_params(self.form_data))
+        request = ":".join(request)
         if hashing:
             return self.__usha1(request)
         else:
@@ -180,6 +180,33 @@ class Request(object):
                 (cls.settings.DELAY + delay) / 2.0),
             cls.settings.MAX_DELAY)
 
+    @staticmethod
+    def _encode_params(data):
+        """Encode parameters in a piece of data.
+
+        Will successfully encode parameters when passed as a dict or a list of
+        2-tuples. Order is retained if data is a list of 2-tuples but arbitrary
+        if parameters are supplied as a dict.
+        """
+        if data is None:
+            return ''
+        elif isinstance(data, basestring):
+            return data
+        elif hasattr(data, 'read'):
+            return data
+        elif hasattr(data, '__iter__'):
+            result = []
+            for k, vs in sorted(CaseInsensitiveDict(data).lower_items()):
+                if isinstance(vs, basestring) or not hasattr(vs, '__iter__'):
+                    vs = [vs]
+                for v in vs:
+                    if v is not None:
+                        result.append(
+                            (k.encode('utf-8') if isinstance(k, str) else k,
+                             v.encode('utf-8') if isinstance(v, str) else v))
+            return urlencode(result, doseq=True)
+        else:
+            return data
 
 class Response(requests.Response):
 

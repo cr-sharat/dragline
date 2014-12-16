@@ -96,7 +96,7 @@ class Dict(object):
         self.pattern = '%s:%s' % (namespace, pattern)
 
     def __len__(self):
-        return len(self.__db.keys(self.pattern))
+        return len(list(self.__db.scan_iter(self.pattern)))
 
     def __setitem__(self, idx, value):
         name = self.pattern.replace('*', idx)
@@ -121,11 +121,11 @@ class Dict(object):
         for n, i in enumerate(self.pattern.split(':')):
             if i == "*":
                 break
-        keys = [key.split(':')[n] for key in self.__db.keys(self.pattern)]
+        keys = [key.split(':')[n] for key in self.__db.scan_iter(self.pattern)]
         return ((key, self[key]) for key in keys)
 
     def clear(self):
-        val = self.__db.keys(self.pattern)
+        val = list(self.__db.scan_iter(self.pattern))
         if val:
             return self.__db.delete(*val)
 
