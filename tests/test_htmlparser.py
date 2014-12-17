@@ -14,7 +14,7 @@ class HtmlParserTest(unittest.TestCase):
         html = htmlparser.HtmlParser(res)
         urlpattern = re.compile(
             'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
-        urls = html.extract_urls()
+        urls = list(html.extract_urls())
         for url in urls:
             if not urlpattern.match(url):
                 self.fail('Invalid url')

@@ -53,37 +53,40 @@ class Request(object):
     timeout = None
     fromcache = True
     proxy = []
+    allow_redirect = True
 
     def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None,
-                 cookies=None, proxy=None, timeout=None, dontfilter=None, fromcache=None):
+                 cookies=None, proxy=None, timeout=None, dontfilter=None, fromcache=None, allow_redirects=None):
         if isinstance(url, str):
             self.url = str(url)
         elif isinstance(url, unicode):
             self.url = unicode(url)
         else:
             raise AssertionError("Invalid url type")
-        if form_data:
+        if form_data is not None:
             self.method = 'POST'
             self.form_data = form_data
-        if method:
+        if method is not None:
             assert method in ['GET', 'POST', 'HEAD', 'PUT', 'DELETE'], 'INVALID METHOD'
             self.method = method
-        if callback:
+        if callback is not None:
             self.callback = callback
-        if meta:
+        if meta is not None:
             self.meta = meta
-        if headers:
+        if headers is not None:
             self.headers = headers
-        if proxy:
+        if proxy is not None:
             self.proxy = proxy
-        if cookies:
+        if cookies is not None:
             self.cookies = cookies
-        if dontfilter:
+        if dontfilter is not None:
             self.dontfilter = True
-        if timeout:
+        if timeout is not None:
             self.timeout = timeout
-        if fromcache:
+        if fromcache is not None:
             self.fromcache = fromcache
+        if allow_redirects is not None:
+            self.allow_redirect = allow_redirects
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -137,7 +140,7 @@ class Request(object):
             else:
                 timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
             args = dict(url=self.url, method=self.method, data=self.form_data,
-                        verify=False, timeout=timeout, cookies=self.cookies)
+                        verify=False, timeout=timeout, cookies=self.cookies, allow_redirects=self.allow_redirect)
             if len(self.proxy) > 0:
                 proxy = self.proxy
             elif len(self.settings.PROXIES) > 0:

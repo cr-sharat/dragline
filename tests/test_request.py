@@ -36,6 +36,9 @@ class RequestTest(unittest.TestCase):
     def test_redirect(self):
         response = Request(httpbin('redirect', '4')).send()
         self.assertEqual(httpbin('get'), response.json()['url'])
+        self.assertEqual(response.status_code, 200)
+        response = Request(httpbin('redirect', '4'), allow_redirects=False).send()
+        self.assertEqual(response.status_code, 302)
 
     #def test_proxy(self):
         #request = Request(httpbin('/ip'), proxy=('user', 'password', 'ip', 'port'))

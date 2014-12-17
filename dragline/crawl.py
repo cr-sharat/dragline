@@ -142,7 +142,7 @@ class Crawler:
         if not isinstance(request, Request):
             return
         url = urlsplit(request.url)
-        if url.scheme in ['http', 'https'] and url.hostname:
+        if not all((url.scheme in ['http', 'https'], url.hostname)):
             self.logger.warning('invalid url %s', url.geturl())
             return
         reqhash = request.get_unique_id(True)
@@ -150,7 +150,7 @@ class Crawler:
             check = not request.dontfilter
         if check:
             if self.spider.allowed_domains and url.hostname not in self.spider.allowed_domains:
-                self.logger.warning('domain %s not in %s', url.hostname, str(self.spider.allowed_domains))
+                self.logger.warning('invalid url %s (domain %s not in %s)', url.geturl(), url.hostname, str(self.spider.allowed_domains))
                 return
             elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
                 return
