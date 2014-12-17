@@ -157,7 +157,7 @@ class Request(object):
                 self.settings.CACHE[self.get_unique_id()] = res
 
             if self.settings.AUTOTHROTTLE:
-                self.updatedelay(res.elapsed)
+                self.updatedelay(res.elapsed.seconds)
                 time.sleep(self.settings.DELAY)
         except Exception as e:
             raise RequestError(e.message)
