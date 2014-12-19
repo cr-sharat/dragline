@@ -72,7 +72,7 @@ class Crawler:
                                        **redis_args)
         self.runner = redisds.Lock("runner:%s" % uuid4().hex, **redis_args)
         self.runners = redisds.Dict("runner:*", **redis_args)
-        self.stats = redisds.Dict("stats:*", **redis_args)
+        self.stats = redisds.Hash("stats", **redis_args)
         self.lock = BoundedSemaphore(1)
         self.running_count = 0
         if not hasattr(spider, 'allowed_domains'):
@@ -85,7 +85,7 @@ class Crawler:
         return datetime.now(tz).isoformat()
 
     def start(self):
-        if not self.settings.RESUME and self.completed():
+        if not self.settings.RESUME and self.is_inactive():
             self.url_queue.clear()
             self.url_set.clear()
         if self.url_queue.empty():
@@ -95,33 +95,28 @@ class Crawler:
         else:
             requests = [self.spider.start]
         for request in requests:
-            if isinstance(request, str):
+            if isinstance(request, basestring):
                 request = Request(request)
             if request.callback is None:
                 request.callback = "parse"
             self.insert(request)
-        if self.stats['status'] != "running":
-            self.stats['status'] = "running"
+        if self.stats.setnx('status', "running"):
             self.stats['start_time'] = self.current_time()
-            self.logger.info("Starting spider %s", dict(self.stats))
+            self.logger.info("Starting spider %s", dict(iter(self.stats)))
         else:
-            self.logger.info("Supporting %s", dict(self.stats))
+            self.logger.info("Supporting %s", dict(iter(self.stats)))
 
     def clear(self, finished):
         self.runner.release()
-        if self.stats['status'] != "running":
-            return
-        if self.completed():
+        status = 'finished' if finished else 'stopped'
+        if self.is_inactive() and self.stats.setifval('status', 'running', status):
             self.stats['end_time'] = self.current_time()
             if finished:
-                self.stats['status'] = 'finished'
                 self.url_queue.clear()
                 self.url_set.clear()
-            else:
-                self.stats['status'] = 'stopped'
-        self.logger.info("%s", dict(self.stats))
+            self.logger.info("%s", dict(iter(self.stats)))
 
-    def completed(self):
+    def is_inactive(self):
         return len(self.runners) == 0
 
     def inc_count(self):
@@ -195,6 +190,6 @@ class Crawler:
                 finally:
                     self.decr_count()
             else:
-                if self.completed():
+                if self.is_inactive():
                     break
                 self.logger.debug("No url to process, active threads: %s", self.running_count)

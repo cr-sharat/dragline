@@ -297,3 +297,58 @@ class WorkerThread(threading.Thread):
 class LockTimeout(Exception):
 
     """Raised in the event a timeout occurs while waiting for a lock"""
+
+
+class Hash(object):
+
+    """Simple Queue with Redis Backend"""
+
+    def __init__(self, name, namespace='hash', **redis_kwargs):
+        """
+        The default parameters are:
+            namespace='queue', serializer=None, hash_func=usha1
+            host='localhost', port=6379, db=0
+        """
+        self.__db = redis.Redis(
+            connection_pool=poolmanager.getpool(**redis_kwargs))
+        self.key = '%s:%s' % (namespace, name)
+
+    def __len__(self):
+        return self.__db.hlen(self.key)
+
+    def __setitem__(self, idx, value):
+        self.__db.hset(self.key, idx, value)
+
+    def setnx(self, idx, value):
+        return self.__db.hsetnx(self.key, idx, value)
+
+    def setifval(self, idx, oldvalue, newvalue):
+        """ set ``idx`` to ``newvalue`` if current value is ``oldvalue`` """
+        lua_script = """
+        if redis.call('HGET', KEYS[1], ARGV[1]) == ARGV[2] then
+            return redis.call('HSET', KEYS[1], ARGV[1], ARGV[3]) + 1
+        else
+            return nil
+            end
+        """
+        return self.__db.eval(lua_script, 1, self.key, idx, oldvalue, newvalue)
+
+    def __getitem__(self, key):
+        value = self.__db.hget(self.key, key)
+        return int(value) if isinstance(value, basestring) and value.isdigit() else value
+
+    def inc(self, key, value=1):
+        return self.__db.hincrby(self.key, key, value)
+
+    def __iter__(self):
+        return self.__db.hscan_iter(self.key)
+
+    def clear(self):
+        return self.__db.delete(self.key)
+
+    def keys(self):
+        return self.__db.hkeys(self.key)
+
+    def values(self):
+        intify = lambda value: int(value) if isinstance(value, basestring) and value.isdigit() else value
+        return map(intify, self.__db.hvals(self.key))
