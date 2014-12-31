@@ -343,6 +343,9 @@ class Hash(object):
     def __iter__(self):
         return self.__db.hscan_iter(self.key)
 
+    def scan(self, match=None):
+        return self.__db.hscan_iter(self.key, match=match)
+
     def clear(self):
         return self.__db.delete(self.key)
 
