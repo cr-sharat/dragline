@@ -18,6 +18,19 @@ class RedisPoolManager:
 poolmanager = RedisPoolManager()
 
 
+class Publiser(object):
+
+    """Simple Queue with Redis Backend"""
+
+    def __init__(self, namespace='signal', **redis_kwargs):
+        self.__db = redis.Redis(
+            connection_pool=poolmanager.getpool(**redis_kwargs))
+        self.key = namespace
+
+    def publish(self, channel):
+        self.__db.publish(channel, self.key)
+
+
 class Queue(object):
 
     """Simple Queue with Redis Backend"""
@@ -83,13 +96,12 @@ class Queue(object):
 
 class Dict(object):
 
-    """Simple Queue with Redis Backend"""
+    """Simple Dict with Redis Backend"""
 
     def __init__(self, pattern='*', namespace='dict', **redis_kwargs):
         """
         The default parameters are:
-            namespace='queue', serializer=None, hash_func=usha1
-            host='localhost', port=6379, db=0
+            namespace='dict', host='localhost', port=6379, db=0
         """
         self.__db = redis.Redis(
             connection_pool=poolmanager.getpool(**redis_kwargs))
@@ -301,13 +313,12 @@ class LockTimeout(Exception):
 
 class Hash(object):
 
-    """Simple Queue with Redis Backend"""
+    """Simple Hash with Redis Backend"""
 
     def __init__(self, name, namespace='hash', **redis_kwargs):
         """
         The default parameters are:
-            namespace='queue', serializer=None, hash_func=usha1
-            host='localhost', port=6379, db=0
+            namespace='hash', host='localhost', port=6379, db=0
         """
         self.__db = redis.Redis(
             connection_pool=poolmanager.getpool(**redis_kwargs))
@@ -355,3 +366,4 @@ class Hash(object):
     def values(self):
         intify = lambda value: int(value) if isinstance(value, basestring) and value.isdigit() else value
         return map(intify, self.__db.hvals(self.key))
+

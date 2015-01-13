@@ -72,6 +72,7 @@ class Crawler:
                                        **redis_args)
         self.runner = redisds.Lock("runner:%s" % uuid4().hex, **redis_args)
         self.runners = redisds.Dict("runner:*", **redis_args)
+        self.publiser = redisds.Publiser(**redis_args)
         self.stats = redisds.Hash("stats", **redis_args)
         self.lock = BoundedSemaphore(1)
         self.running_count = 0
@@ -103,6 +104,7 @@ class Crawler:
         if self.stats.setnx('status', "running"):
             self.stats['start_time'] = self.current_time()
             self.logger.info("Starting spider %s", dict(iter(self.stats)))
+            self.publiser.publish('status_changed:running')
         else:
             self.logger.info("Supporting %s", dict(iter(self.stats)))
 
@@ -115,6 +117,7 @@ class Crawler:
                 self.url_queue.clear()
                 self.url_set.clear()
             self.logger.info("%s", dict(iter(self.stats)))
+            self.publiser.publish('status_changed:stopped')
 
     def is_inactive(self):
         return len(self.runners) == 0
