@@ -1,8 +1,5 @@
 from lxml import html, etree
-from parslepy import Parselet
 from parslepy.funcs import xpathstrip, xpathtostring
-from cssselect import HTMLTranslator
-import re
 from urlparse import urlsplit
 
 

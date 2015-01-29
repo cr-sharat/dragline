@@ -331,7 +331,7 @@ class Hash(object):
         self.__db.hset(self.key, idx, value)
 
     def setnx(self, idx, value):
-        return self.__db.hsetnx(self.key, idx, value)
+        return self.__db.hsetnx(self.key, idx, value) == 1
 
     def setifval(self, idx, oldvalue, newvalue):
         """ set ``idx`` to ``newvalue`` if current value is ``oldvalue`` """

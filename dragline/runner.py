@@ -12,17 +12,15 @@ from .crawl import Crawler
 logger = LogSettings().getLogger("dragline")
 
 
-def load_modules(path, spiderfile="main", settingsfile="settings"):
+def load_module(path, filename):
     try:
-        spiderfile = spiderfile.strip('.py')
-        settingsfile = settingsfile.strip('.py')
+        filename = filename.strip('.py')
         sys.path.insert(0, path)
-        spider = __import__(spiderfile)
-        settings = __import__(settingsfile)
+        module = __import__(filename)
         del sys.path[0]
-        return spider, settings
-    except Exception as e:
-        logger.exception("Failed to load module %s" % spiderfile)
+        return module
+    except Exception:
+        logger.exception("Failed to load module %s" % filename)
         raise ImportError
 
 
@@ -49,7 +47,8 @@ def run():
                         version='%(prog)s {version}'.format(version=__version__))
     args = parser.parse_args()
     path = os.path.abspath(args.spider)
-    spider_module, settings_module = load_modules(path)
+    spider_module = load_module(path, 'main')
+    settings_module = load_module(path, 'settings')
     if args.resume:
         try:
             settings_module.CRAWL['RESUME'] = True

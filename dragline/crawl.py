@@ -3,17 +3,17 @@ try:
     from cPickle import Pickler, Unpickler, HIGHEST_PROTOCOL
 except:
     from pickle import Pickler, Unpickler, HIGHEST_PROTOCOL
-import re
+
 from .defaultsettings import CrawlSettings, RequestSettings
 from .defaultsettings import SpiderSettings, LogSettings
 from . import redisds
-from gevent.coros import BoundedSemaphore
+from gevent.lock import BoundedSemaphore
 from .http import Request, RequestError
 from uuid import uuid4
 from datetime import datetime
 from pytz import timezone
 import logging
-import sys
+
 from requests.compat import urlsplit
 try:
     from cStringIO import StringIO
@@ -89,7 +89,6 @@ class Crawler:
         if not self.settings.RESUME and self.is_inactive():
             self.url_queue.clear()
             self.url_set.clear()
-        if self.url_queue.empty():
             self.stats.clear()
         if isinstance(self.spider.start, list):
             requests = self.spider.start

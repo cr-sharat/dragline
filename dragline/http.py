@@ -5,11 +5,9 @@ import time
 import requests
 from requests.structures import CaseInsensitiveDict
 from .defaultsettings import RequestSettings
-import operator
 import random
 from .redisds import Dict
 import types
-import re
 
 socket.setdefaulttimeout(300)
 

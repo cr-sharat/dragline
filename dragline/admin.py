@@ -1,5 +1,4 @@
 from string import Template
-import dragline
 import ConfigParser
 import os
 import inspect
