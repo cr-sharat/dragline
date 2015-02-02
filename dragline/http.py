@@ -1,12 +1,9 @@
 from requests.compat import urlencode, urldefrag
 import socket
 from hashlib import sha1
-import time
 import requests
 from requests.structures import CaseInsensitiveDict
-from .defaultsettings import RequestSettings
 import random
-from .redisds import Dict
 import types
 
 socket.setdefaulttimeout(300)
@@ -24,67 +21,53 @@ class RequestError(Exception):
 class Request(object):
 
     """
-    :param url: the URL of this request
-    :type url: string
-    :param method: the HTTP method of this request. Defaults to ``'GET'``.
-    :type method: string
-    :param headers: the headers of this request.
-    :type headers: dict
+    :param url: URL to send.
+    :param method: HTTP method to use.
     :param callback: name of the function to call after url is downloaded.
-    :type callback: string
     :param meta:  A dict that contains arbitrary metadata for this request.
-    :type meta: dict
+    :param headers: dictionary of headers to send.
+    :param files: dictionary of {filename: fileobject} files to multipart upload.
+    :param data: the body to attach to the request. If a dictionary is provided, form-encoding will take place.
+    :param json: json for the body to attach to the request (if data is not specified).
+    :param params: dictionary of URL parameters to append to the URL.
+    :param auth: Auth handler or (user, pass) tuple.
+    :param cookies: dictionary or CookieJar of cookies to attach to this request.
+    :param timeout: (optional) How long to wait for the server to send
+        data before giving up, as a float, or a tuple.
+    :type timeout: float or tuple
+    :param allow_redirects: (optional) Set to True by default.
+    :type allow_redirects: bool
+    :param proxies: (optional) Dictionary mapping protocol to the URL of
+        the proxy.
+    :param stream: (optional) whether to immediately download the response
+        content. Defaults to ``False``.
+    :param verify: (optional) if ``True``, the SSL cert will be verified.
+        A CA_BUNDLE path can also be provided.
+    :param cert: (optional) if String, path to ssl client cert file (.pem).
+        If Tuple, ('cert', 'key') pair.
     """
-
-    settings = RequestSettings()
-    stats = Dict("stats:*")
-    method = "GET"
-    form_data = None
-    headers = {}
+    settings = dict(method=None, headers=None, files=None, data=None, json=None,
+                    params=None, auth=None, cookies=None, timeout=None, allow_redirects=True,
+                    proxies=None, stream=False, verify=False, cert=None)
+    callback_object = None
     callback = None
     meta = None
+    dont_filter = False
     retry = 0
-    cookies = None
-    callback_object = None
-    dontfilter = False
-    session = requests.Session()
-    timeout = None
-    fromcache = True
-    proxy = []
-    allow_redirect = True
 
-    def __init__(self, url, method=None, form_data=None, headers=None, callback=None, meta=None,
-                 cookies=None, proxy=None, timeout=None, dontfilter=None, fromcache=None, allow_redirects=None):
-        if isinstance(url, str):
-            self.url = str(url)
-        elif isinstance(url, unicode):
-            self.url = unicode(url)
-        else:
-            raise AssertionError("Invalid url type")
-        if form_data is not None:
-            self.method = 'POST'
-            self.form_data = form_data
-        if method is not None:
-            assert method in ['GET', 'POST', 'HEAD', 'PUT', 'DELETE'], 'INVALID METHOD'
-            self.method = method
+    def __init__(self, url, method=None, callback=None, meta=None, headers=None, files=None, data=None, json=None,
+                 params=None, auth=None, cookies=None, timeout=None, allow_redirects=None, proxies=None, stream=None,
+                 verify=None, cert=None, dont_filter=None):
+        args = dict(url=url, method=method, headers=headers, files=files, data=data, json=json, params=params,
+                    auth=auth, cookies=cookies, timeout=timeout, allow_redirects=allow_redirects, proxies=proxies,
+                    stream=stream, verify=verify, cert=cert)
+        self.request_args = {k: v for k, v in args.items() if v is not None}
         if callback is not None:
             self.callback = callback
         if meta is not None:
             self.meta = meta
-        if headers is not None:
-            self.headers = headers
-        if proxy is not None:
-            self.proxy = proxy
-        if cookies is not None:
-            self.cookies = cookies
-        if dontfilter is not None:
-            self.dontfilter = True
-        if timeout is not None:
-            self.timeout = timeout
-        if fromcache is not None:
-            self.fromcache = fromcache
-        if allow_redirects is not None:
-            self.allow_redirect = allow_redirects
+        if dont_filter:
+            self.dont_filter = True
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -112,6 +95,28 @@ class Request(object):
         else:
             return sha1(x).hexdigest()
 
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError as e:
+            if name in self.request_args:
+                return self.request_args[name]
+        raise e
+
+    def get_args(self, keys=None):
+        args = self.settings.copy()
+        args.update(self.request_args)
+        if args['method'] is None:
+            if any((args['data'], args['json'])):
+                args['method'] = "POST"
+            else:
+                args['method'] = "GET"
+        # if 'timeout' not in args:
+        #    args['timeout'] = max(self.settings.DELAY, self.settings.TIMEOUT)
+        if keys:
+            return {k: '' if args[k] is None else args[k] for k in keys}
+        return args
+
     def send(self):
         """
         This function sends HTTP requests.
@@ -126,60 +131,28 @@ class Request(object):
         200
 
         """
-
         try:
-            if self.fromcache and self.settings.CACHE:
-                cache = self.settings.CACHE[self.get_unique_id()]
-                if cache is not None:
-                    cache.fromcache = True
-                    return cache
-            if self.timeout:
-                timeout = self.timeout
-            else:
-                timeout = max(self.settings.DELAY, self.settings.TIMEOUT)
-            args = dict(url=self.url, method=self.method, data=self.form_data,
-                        verify=False, timeout=timeout, cookies=self.cookies, allow_redirects=self.allow_redirect)
-            if len(self.proxy) > 0:
-                proxy = self.proxy
-            elif len(self.settings.PROXIES) > 0:
-                proxy = random.choice(self.settings.PROXIES)
-            else:
-                proxy = None
-            if proxy:
-                pattern = "http://%s:%s" if len(proxy) == 2 else "http://%s:%s@%s:%s"
-                args['proxies'] = {"http": pattern % proxy, "https": pattern % proxy}
-            args['headers'] = self.settings.HEADERS
-            args['headers'].update(self.headers)
-            res = Response(self.session.request(**args), self.meta)
-            if self.settings.CACHE:
-                self.settings.CACHE[self.get_unique_id()] = res
-
-            if self.settings.AUTOTHROTTLE:
-                self.updatedelay(res.elapsed.seconds)
-                time.sleep(self.settings.DELAY)
+            session = requests.Session()
+            response = session.request(**self.get_args())
+            if response.encoding == 'ISO-8859-1' and 'ISO-8859-1' not in response.headers.get('Content-Type', ''):
+                response.encoding = response.apparent_encoding
+            response.cookies = session.cookies
+            response.meta = self.meta
+            return Response(response)
         except Exception as e:
             raise RequestError(e.message)
-        else:
-            self.stats.inc('pages_crawled')
-            self.stats.inc('request_bytes', len(res))
-        return res
 
     def get_unique_id(self, hashing=False):
-        request = [self.method, urldefrag(self.url)[0]]
-        if self.form_data:
-            request.append(self._encode_params(self.form_data))
-        request = ":".join(request)
+        keys = ["method", "url", "data", "param"]
+        args = self.get_args(keys)
+        args["url"] = urldefrag(args["url"])[0]
+        args["data"] = self._encode_params(args["data"])
+        args["url"] += "?" + self._encode_params(args["params"])
+        request = ":".join(args[k] for k in keys[:-1])
         if hashing:
             return self.__usha1(request)
         else:
             return request
-
-    @classmethod
-    def updatedelay(cls, delay):
-        cls.settings.DELAY = min(
-            max(cls.settings.MIN_DELAY, delay,
-                (cls.settings.DELAY + delay) / 2.0),
-            cls.settings.MAX_DELAY)
 
     @staticmethod
     def _encode_params(data):
@@ -209,39 +182,37 @@ class Request(object):
         else:
             return data
 
+
 class Response(requests.Response):
-
+    """The :class:`Response <Response>` object, which contains a
+    server's response to an HTTP request.
     """
-    This function is used to create user defined
-    response to test your spider and also in many
-    other cases.
 
-    :param url: the URL of this response
-    :type url: string
+    __attrs__ = [
+        '_content',
+        'status_code',
+        'headers',
+        'url',
+        'history',
+        'encoding',
+        'reason',
+        'cookies',
+        'elapsed',
+        'request',
+        'meta'
+    ]
 
-    :param headers: the headers of this response.
-    :type headers: dict
-
-    :param body: the response body.
-    :type body: str
-
-    :param meta: meta copied from request
-    :type meta: dict
-
-    """
     meta = None
     fromcache = False
 
-    def __init__(self, response=requests.Response(), meta=None):
+    def __init__(self, response=requests.Response()):
         if isinstance(response, requests.Response):
             self.__dict__ = response.__dict__
-        if meta:
-            self.meta = meta
 
     def __len__(self):
         if 'content-length' in self.headers:
             return int(self.headers['content-length'])
-        return len(self.content)
+        return self.raw.tell()
 
     @property
     def body(self):

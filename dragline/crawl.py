@@ -3,9 +3,6 @@ try:
     from cPickle import Pickler, Unpickler, HIGHEST_PROTOCOL
 except:
     from pickle import Pickler, Unpickler, HIGHEST_PROTOCOL
-
-from .defaultsettings import CrawlSettings, RequestSettings
-from .defaultsettings import SpiderSettings, LogSettings
 from . import redisds
 from gevent.lock import BoundedSemaphore
 from .http import Request, RequestError
@@ -13,6 +10,9 @@ from uuid import uuid4
 from datetime import datetime
 from pytz import timezone
 import logging
+from logging.config import dictConfig
+import time
+from .settings import Settings
 
 from requests.compat import urlsplit
 try:
@@ -34,26 +34,22 @@ class Pickle():
 
 
 class Crawler:
-    settings = CrawlSettings()
-
     def __init__(self, spider_class, settings):
         def get(value, default={}):
             try:
                 return getattr(settings, value)
             except AttributeError:
                 return default
-        self.settings = CrawlSettings(get('CRAWL'))
-        Request.settings = RequestSettings(get('REQUEST'))
-        spider_settings = SpiderSettings(get('SPIDER'))
-        spider = spider_class(spider_settings)
+        self.settings = Settings(settings)
+        dictConfig(self.settings.LOGGING)
+        Request.settings = self.settings.DEFAULT_REQUEST_ARGS
+        spider = spider_class(self.settings)
         Request.callback_object = spider
-        log = LogSettings(get('LOGFORMATTERS'), get('LOGHANDLERS'),
-                          get('LOGGERS'))
         if hasattr(self.settings, 'NAMESPACE'):
-            logger = log.getLogger(str(self.settings.NAMESPACE))
+            logger = logging.getLogger(str(self.settings.NAMESPACE))
             logger = logging.LoggerAdapter(logger, {"spider_name": spider.name})
         else:
-            logger = log.getLogger(spider.name)
+            logger = logging.getLogger(spider.name)
         spider.logger = logger
         self.logger = logger
         self.load(spider)
@@ -74,6 +70,7 @@ class Crawler:
         self.runners = redisds.Dict("runner:*", **redis_args)
         self.publiser = redisds.Publiser(**redis_args)
         self.stats = redisds.Hash("stats", **redis_args)
+        self.conf = redisds.Hash("conf", **redis_args)
         self.lock = BoundedSemaphore(1)
         self.running_count = 0
         if not hasattr(spider, 'allowed_domains'):
@@ -86,6 +83,7 @@ class Crawler:
         return datetime.now(tz).isoformat()
 
     def start(self):
+        self.conf['DELAY'] = self.settings.MIN_DELAY
         if not self.settings.RESUME and self.is_inactive():
             self.url_queue.clear()
             self.url_set.clear()
@@ -140,21 +138,38 @@ class Crawler:
             return
         url = urlsplit(request.url)
         if not all((url.scheme in ['http', 'https'], url.hostname)):
-            self.logger.warning('invalid url %s', url.geturl())
+            self.logger.debug('invalid url %s', url.geturl())
             return
         reqhash = request.get_unique_id(True)
         if check:
-            check = not request.dontfilter
+            check = not request.dont_filter
         if check:
             if self.spider.allowed_domains and url.hostname not in self.spider.allowed_domains:
-                self.logger.warning('invalid url %s (domain %s not in %s)', url.geturl(), url.hostname, str(self.spider.allowed_domains))
+                self.logger.debug('invalid url %s (domain %s not in %s)', url.geturl(), url.hostname, str(self.spider.allowed_domains))
                 return
-            elif self.settings.UNIQUE_CHECK and reqhash in self.url_set:
-                return
-        if self.settings.UNIQUE_CHECK and check:
-            self.url_set.add(reqhash)
+            elif self.settings.UNIQUE_CHECK:
+                if not self.url_set.add(reqhash):
+                    return
         self.url_queue.put(request)
         del request
+
+    def updatedelay(self, delay):
+        self.conf['DELAY'] = min(
+            max(self.settings.MIN_DELAY, delay,
+                (float(self.conf['DELAY']) + delay) / 2.0),
+            self.settings.MAX_DELAY)
+
+    def process_request(self, request):
+        response = request.send()
+        if self.settings.AUTOTHROTTLE:
+            self.updatedelay(response.elapsed.seconds)
+            time.sleep(float(self.conf['DELAY']))
+        self.stats.inc('pages_crawled')
+        self.stats.inc('request_bytes', len(response))
+        requests = request.callback(response)
+        if requests:
+            for i in requests:
+                self.insert(i)
 
     def process_url(self):
         while self.stats['status'] == "running":
@@ -163,30 +178,19 @@ class Crawler:
                 self.logger.debug("Processing %s", request)
                 self.inc_count()
                 try:
-                    response = request.send()
-                    try:
-                        requests = request.callback(response)
-                        if requests:
-                            for i in requests:
-                                self.insert(i)
-                    except KeyboardInterrupt:
-                        raise KeyboardInterrupt
-                    except RequestError as e:
-                        raise RequestError(e)
-                    except:
-                        self.logger.exception("Failed to execute callback on %s", request)
-                except RequestError as e:
+                    self.process_request(request)
+                except RequestError:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
                         self.logger.warning("Rejecting %s", request, exc_info=True)
                     else:
                         self.logger.debug("Retrying %s", request, exc_info=True)
                         self.insert(request, False)
-                # except Exception as e:
-                # self.logger.exception('Failed to open the url %s', request)
                 except KeyboardInterrupt:
                     self.insert(request, False)
                     raise KeyboardInterrupt
+                except:
+                    self.logger.exception("Failed to execute callback on %s", request)
                 else:
                     self.logger.debug("Finished processing %s", request)
                 finally:

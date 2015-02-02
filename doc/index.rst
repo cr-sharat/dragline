@@ -20,10 +20,9 @@ There are some crawling packages available in the community.Effieciency must be 
 priority since the emergence of large projects.Dragline is different from others in many aspects.The most 
 significant feautures of dragline those makes it powerful:
 
-	1. Built from scratch.
-	2. redis backend for persistant storage.
-	3. used high level synchronous API through greenlets.
-  
+    1. Built from scratch.
+    2. redis backend for persistant storage.
+
 
 First steps
 ===========
@@ -32,7 +31,7 @@ First steps
 
    install
    tutorial
-   
+
 :doc:`install`
     Get Dragline installed on your computer.
 
@@ -42,13 +41,13 @@ First steps
 
 Contents
 ===========
-
 .. toctree::
-    http
-    parser
-    shell
-    settings
+   :titlesonly:
 
+   http
+   parser
+   settings
+   shell
 
 
 Indices and tables

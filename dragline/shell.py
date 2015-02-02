@@ -1,8 +1,9 @@
 from dragline.http import Request
-from dragline.htmlparser import HtmlParser
+from dragline.parser import HtmlParser
 import argparse
 from lxml.html import open_in_browser
 from collections import defaultdict
+import traceback
 
 
 def start_python_console(namespace=None, noipython=False, banner=''):
@@ -41,7 +42,7 @@ def start_python_console(namespace=None, noipython=False, banner=''):
         pass
 
 
-def shelp():
+def help():
     repr_data = defaultdict(lambda: None, {k: repr(v) for k, v in data.iteritems()})
     intro = """\n[d] Available Dragline objects:
     [d]   parser                 %(parser)s
@@ -51,14 +52,13 @@ def shelp():
     [d]   shelp()                Shell help (print this help)
     [d]   fetch(req_or_url)      Fetch request (or URL) and update local objects
     [d]   view(response=None)    View response in a browser\n\n""" % repr_data
-    print(intro)
+    return intro
 
 
-def fetch(req_or_url):
+def process(req_or_url):
     global data
     if not req_or_url:
-        shelp()
-        return
+        return help()
     if isinstance(req_or_url, Request):
         data["request"] = req_or_url
     else:
@@ -67,14 +67,18 @@ def fetch(req_or_url):
         data["response"] = data["request"].send()
     except:
         data["response"] = None
+        print traceback.format_exc()
         print("Failed to fetch")
     try:
         data["parser"] = HtmlParser(data["response"])
     except:
         data["parser"] = None
         print("Failed to parse response")
-    shelp()
+    return help()
 
+def fetch(req_or_url):
+    result = process(req_or_url)
+    print result
 
 def view(response=None):
     if response is None:
@@ -82,7 +86,7 @@ def view(response=None):
         response = data["response"]
     open_in_browser(HtmlParser(response), response.encoding)
 
-data = {"fetch": fetch, "view": view, "shelp": shelp,
+data = {"fetch": fetch, "view": view, "shelp": help,
         "Request": Request, 'parser': None, 'response': None,
         'request': None}
 
@@ -91,8 +95,8 @@ def execute():
     parser = argparse.ArgumentParser()
     parser.add_argument('url', action='store', default='', help='url', nargs='?')
     url = (parser.parse_args()).url
-    fetch(url)
-    start_python_console(data)
+    result = process(url)
+    start_python_console(data, banner=result)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 from lxml import html, etree
-from parslepy.funcs import xpathstrip, xpathtostring
+from funcs import xpathstrip, xpathtostring, extract_html, extract_text
 from urlparse import urlsplit
 
 
@@ -9,8 +9,17 @@ ns['str'] = xpathtostring
 
 
 class HTMLElement(html.HtmlMixin):
+    """
+    HtmlElement object is returned by the HtmlParser function:
+
+    >>> response = Request('http://www.example.org/').send()
+    >>> parser = HtmlParser(response)
+    """
 
     def extract_urls(self, xpath=None, domains=None):
+        """
+        Returns a list of all the links with given domains
+        """
         if xpath and not xpath.endswith('/'):
             xpath += '/'
         elif xpath is None:
@@ -22,13 +31,18 @@ class HTMLElement(html.HtmlMixin):
                 yield url.geturl()
 
     def extract_text(self):
-        return "".join(i.strip() for i in self.itertext())
+        """
+        Returns the text content of the element,
+        including the text content of its children, with no markup.
 
-    def css(self, expr):
-        return self.xpath(self.cssselect(expr))
+        >>> list(parser.extract_urls())
+        ['http://www.iana.org/domains/example']
+        """
 
-    def html_content(self, pretty_print=False):
-        return html.tostring(self, pretty_print, encoding=unicode)
+        return extract_text(self)
+
+    def html_content(self):
+        return extract_html(self)
 
 
 class HtmlComment(etree.CommentBase, HTMLElement):

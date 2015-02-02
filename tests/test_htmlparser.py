@@ -1,5 +1,5 @@
 from dragline import http
-from dragline import htmlparser
+from dragline.parser import HtmlParser
 import unittest
 import re
 
@@ -11,7 +11,7 @@ class HtmlParserTest(unittest.TestCase):
 
     def test_links(self):
         res = http.Request('http://httpbin.org/links/10').send()
-        html = htmlparser.HtmlParser(res)
+        html = HtmlParser(res)
         urlpattern = re.compile(
             'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+')
         urls = list(html.extract_urls())

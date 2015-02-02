@@ -162,7 +162,7 @@ class Set(object):
 
     def add(self, item):
         "Add an item to the set"
-        self.__db.sadd(self.key, item)
+        return self.__db.sadd(self.key, item) == 1
 
     def __contains__(self, item):
         return self.is_member(item)

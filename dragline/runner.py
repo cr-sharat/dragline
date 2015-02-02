@@ -1,15 +1,14 @@
-from dragline import __version__
 from gevent import spawn, joinall, monkey
 monkey.patch_all()
+
+from dragline import __version__
 import sys
 import argparse
 import os
-import traceback
-from .defaultsettings import SpiderSettings, LogSettings
+import logging
 from .crawl import Crawler
 
-
-logger = LogSettings().getLogger("dragline")
+logger = logging.getLogger('dragline')
 
 
 def load_module(path, filename):

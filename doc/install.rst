@@ -11,9 +11,10 @@ The installation steps assume that you have the following things installed:
 
 * `Python`_ 2.7
 * `lxml`_. Most Linux distributions ships prepackaged versions of lxml. Otherwise refer to http://lxml.de/installation.html
- 
-* `redis`_.Redis server need to be installed to run the dragline.Please refer to http://redis.io/download 
+* `redis`_.Redis server need to be installed to run the dragline.Please refer to http://redis.io/download
 
+for Ubuntu users::
+    sudo apt-get install libxml2-dev libxslt-dev python-dev redis-server
 
 Installing Dragline
 ===================

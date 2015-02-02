@@ -5,11 +5,11 @@ import inspect
 from httplib2 import Http
 from urllib import urlencode
 import base64
-from runner import load_modules
+from runner import load_module
 import argparse
 import zipfile
 import pkgutil
-from defaultsettings import SpiderSettings
+from dragline.settings import Settings
 from getpass import getpass
 import stat
 
@@ -30,11 +30,11 @@ def zipdir(source, destination):
 
 def upload(url, username, password, foldername, spider_website=None):
     # check whether the folder is a spider
-    if not "main.py" in os.listdir(foldername):
+    if "main.py" not in os.listdir(foldername):
         return "Not a valid spider"
 
     # check if the main.py contain a spider class
-    module, settings = load_modules(foldername)
+    module, settings = load_module(foldername, 'main'), load_module(foldername, 'settings')
     # check if main.py contain a spider class
     try:
         spider = getattr(module, "Spider")
@@ -50,7 +50,7 @@ def upload(url, username, password, foldername, spider_website=None):
         except AttributeError:
             return default
     # create a spider object and check whether it contain required attributes
-    settings = SpiderSettings(get('SPIDER'))
+    settings = Settings(settings)
     spider_object = spider(settings)
 
     try:
@@ -102,12 +102,10 @@ def generate_file(name, data, destination, executable=False):
         os.chmod(filename, mode | stat.S_IXUSR)
 
 
-def generate(spider_dir):
-    os.makedirs(spider_dir)
-    spider_name = os.path.basename(os.path.normpath('dragline/templates/'))
-    generate_file("main", {'spider_name': spider_name}, spider_dir, True)
-    generate_file("settings", {}, spider_dir)
-    generate_file("db", {}, spider_dir)
+def generate(spider):
+    os.makedirs(spider)
+    generate_file("main", {'spider_name': spider}, spider, True)
+    generate_file("settings", {'spider_name': spider}, spider)
 
 
 def add_server(serv_name):
@@ -129,18 +127,18 @@ def execute():
     subparsers = parser.add_subparsers(
         title='subcommands', description='valid subcommands', help='additional help')
 
-    parser_first = subparsers.add_parser('init')
-    parser_first.set_defaults(which='init')
-    parser_first.add_argument('spider', help='spider name')
+    init_parser = subparsers.add_parser('init')
+    init_parser.set_defaults(which='init')
+    init_parser.add_argument('spider', help='spider name')
 
-    parser_second = subparsers.add_parser('deploy')
-    parser_second.set_defaults(which='deploy')
-    parser_second.add_argument('server', help='server name')
-    parser_second.add_argument('spider', help='spider name')
+    deploy_parser = subparsers.add_parser('deploy')
+    deploy_parser.set_defaults(which='deploy')
+    deploy_parser.add_argument('server', help='server name')
+    deploy_parser.add_argument('spider', help='spider name')
 
-    parser_third = subparsers.add_parser('addserver')
-    parser_third.set_defaults(which='addserver')
-    parser_third.add_argument('server', help='assign work for a server')
+    addserver_parser = subparsers.add_parser('addserver')
+    addserver_parser.set_defaults(which='addserver')
+    addserver_parser.add_argument('server', help='assign work for a server')
 
     args = vars(parser.parse_args())
 
