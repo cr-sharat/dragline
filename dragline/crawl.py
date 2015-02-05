@@ -12,7 +12,6 @@ from pytz import timezone
 import logging
 from logging.config import dictConfig
 import time
-from .settings import Settings
 
 from requests.compat import urlsplit
 try:
@@ -34,16 +33,15 @@ class Pickle():
 
 
 class Crawler:
-    def __init__(self, spider_class, settings):
+    def __init__(self, spider, settings):
         def get(value, default={}):
             try:
                 return getattr(settings, value)
             except AttributeError:
                 return default
-        self.settings = Settings(settings)
+        self.settings = settings
         dictConfig(self.settings.LOGGING)
         Request.settings = self.settings.DEFAULT_REQUEST_ARGS
-        spider = spider_class(self.settings)
         Request.callback_object = spider
         if hasattr(self.settings, 'NAMESPACE'):
             logger = logging.getLogger(str(self.settings.NAMESPACE))

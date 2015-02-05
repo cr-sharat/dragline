@@ -7,6 +7,7 @@ import argparse
 import os
 import logging
 from .crawl import Crawler
+from .settings import Settings
 
 logger = logging.getLogger('dragline')
 
@@ -23,8 +24,8 @@ def load_module(path, filename):
         raise ImportError
 
 
-def main(spider_class, settings_module):
-    crawler = Crawler(spider_class, settings_module)
+def main(spider, settings):
+    crawler = Crawler(spider, settings)
     threads = crawler.settings.THREADS
     try:
         joinall([spawn(crawler.process_url) for i in xrange(threads)])
@@ -46,14 +47,11 @@ def run():
                         version='%(prog)s {version}'.format(version=__version__))
     args = parser.parse_args()
     path = os.path.abspath(args.spider)
-    spider_module = load_module(path, 'main')
-    settings_module = load_module(path, 'settings')
+    spider = load_module(path, 'main').Spider
+    settings = Settings(load_module(path, 'settings'))
     if args.resume:
-        try:
-            settings_module.CRAWL['RESUME'] = True
-        except AttributeError:
-            settings_module.CRAWL = {'RESUME': True}
-    main(spider_module.Spider, settings_module)
+        settings.RESUME = True
+    main(spider(settings), settings)
 
 if __name__ == "__main__":
     run()

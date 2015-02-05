@@ -143,7 +143,7 @@ class Request(object):
             raise RequestError(e.message)
 
     def get_unique_id(self, hashing=False):
-        keys = ["method", "url", "data", "param"]
+        keys = ["method", "url", "data", "params"]
         args = self.get_args(keys)
         args["url"] = urldefrag(args["url"])[0]
         args["data"] = self._encode_params(args["data"])
