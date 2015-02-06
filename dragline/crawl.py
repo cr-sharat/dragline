@@ -190,7 +190,7 @@ class Crawler:
                 except:
                     self.logger.exception("Failed to execute callback on %s", request)
                 else:
-                    self.logger.debug("Finished processing %s", request)
+                    self.logger.info("Finished processing %s", request)
                 finally:
                     self.decr_count()
             else:

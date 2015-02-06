@@ -3,7 +3,7 @@ import socket
 from hashlib import sha1
 import requests
 from requests.structures import CaseInsensitiveDict
-import random
+import json
 import types
 
 socket.setdefaulttimeout(300)
@@ -114,7 +114,7 @@ class Request(object):
         # if 'timeout' not in args:
         #    args['timeout'] = max(self.settings.DELAY, self.settings.TIMEOUT)
         if keys:
-            return {k: '' if args[k] is None else args[k] for k in keys}
+            return {k: args[k] for k in keys}
         return args
 
     def send(self):
@@ -143,12 +143,19 @@ class Request(object):
             raise RequestError(e.message)
 
     def get_unique_id(self, hashing=False):
-        keys = ["method", "url", "data", "params"]
+        keys = ["method", "url", "data", "params", "json"]
         args = self.get_args(keys)
         args["url"] = urldefrag(args["url"])[0]
-        args["data"] = self._encode_params(args["data"])
-        args["url"] += "?" + self._encode_params(args["params"])
-        request = ":".join(args[k] for k in keys[:-1])
+        request = ":".join(args[k] for k in keys[:2])
+        if args["params"]:
+            request += "?" + self._encode_params(args["params"])
+        body = None
+        if args["json"]:
+            body = json.dumps(args["json"])
+        elif args["data"]:
+            body = self._encode_params(args["data"])
+        if body:
+            request += ":" + body
         if hashing:
             return self.__usha1(request)
         else:
