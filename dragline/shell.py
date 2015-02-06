@@ -76,9 +76,11 @@ def process(req_or_url):
         print("Failed to parse response")
     return help()
 
+
 def fetch(req_or_url):
     result = process(req_or_url)
     print result
+
 
 def view(response=None):
     if response is None:
