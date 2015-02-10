@@ -51,7 +51,7 @@ def run():
     settings = Settings(load_module(path, 'settings'))
     if args.resume:
         settings.RESUME = True
-    main(spider(settings), settings)
+    main(spider(), settings)
 
 if __name__ == "__main__":
     run()

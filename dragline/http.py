@@ -210,9 +210,8 @@ class Response(requests.Response):
     ]
 
     meta = None
-    fromcache = False
 
-    def __init__(self, response=requests.Response()):
+    def __init__(self, response=None):
         if isinstance(response, requests.Response):
             self.__dict__ = response.__dict__
 
