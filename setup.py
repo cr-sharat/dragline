@@ -1,8 +1,6 @@
 from glob import glob
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup, find_packages
+
 
 setup(
     name='Dragline',
@@ -11,7 +9,7 @@ setup(
     author='Ashwin Rajeev, Shimil Rahman',
     author_email='ashwin@inzyte.com, shimil@inzyte.com',
     url='http://www.inzyte.com',
-    packages=['dragline'],
+    packages=find_packages(exclude=['docs', 'tests*']),
     scripts=glob("scripts/*"),
     data_files=[('dragline/templates', glob("dragline/templates/*"))],
     include_package_data=True,
@@ -22,7 +20,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX :: Linux',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Environment :: Console',
         'Topic :: Software Development :: Libraries :: Application Frameworks',

@@ -14,6 +14,7 @@ The installation steps assume that you have the following things installed:
 * `redis`_.Redis server need to be installed to run the dragline.Please refer to http://redis.io/download
 
 for Ubuntu users::
+
     sudo apt-get install libxml2-dev libxslt-dev python-dev redis-server
 
 Installing Dragline
