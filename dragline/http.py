@@ -99,8 +99,7 @@ class Request(object):
         try:
             return object.__getattribute__(self, name)
         except AttributeError as e:
-            if name in self.request_args:
-                return self.request_args[name]
+            return self.request_args[name]
         raise e
 
     def get_args(self, keys=None):
