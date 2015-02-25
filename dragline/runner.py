@@ -25,6 +25,7 @@ def load_module(path, filename):
 
 
 def main(spider, settings):
+    settings = Settings(settings)
     crawler = Crawler(spider, settings)
     threads = crawler.settings.THREADS
     try:
@@ -48,7 +49,7 @@ def run():
     args = parser.parse_args()
     path = os.path.abspath(args.spider)
     spider = load_module(path, 'main').Spider
-    settings = Settings(load_module(path, 'settings'))
+    settings = load_module(path, 'settings')
     if args.resume:
         settings.RESUME = True
     main(spider(), settings)

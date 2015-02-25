@@ -29,6 +29,11 @@ def DecimalField(**args):
     return Field(args)
 
 
+def ListField(**args):
+    args['type'] = 'list'
+    return Field(args)
+
+
 def DatetimeField(**args):
     args['type'] = 'timestamp'
     return Field(args)
