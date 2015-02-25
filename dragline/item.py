@@ -29,8 +29,8 @@ def DecimalField(**args):
     return Field(args)
 
 
-def ListField(**args):
-    args['type'] = 'list'
+def TextListField(**args):
+    args['type'] = 'list<text>'
     return Field(args)
 
 
