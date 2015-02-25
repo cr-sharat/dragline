@@ -25,7 +25,8 @@ def load_module(path, filename):
 
 
 def main(spider, settings):
-    settings = Settings(settings)
+    if not isinstance(settings, Settings):
+        settings = Settings(settings)
     crawler = Crawler(spider, settings)
     threads = crawler.settings.THREADS
     try:
