@@ -5,7 +5,9 @@ import requests
 from requests.structures import CaseInsensitiveDict
 import json
 import types
+import urllib3
 
+urllib3.disable_warnings()
 socket.setdefaulttimeout(300)
 
 
