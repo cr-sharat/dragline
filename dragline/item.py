@@ -2,6 +2,8 @@ from pprint import pformat
 from collections import MutableMapping
 from abc import ABCMeta
 import six
+from datetime import datetime
+import json
 
 
 class BaseItem(object):
@@ -9,34 +11,78 @@ class BaseItem(object):
     pass
 
 
-class Field(dict):
+class Field(object):
+    primary = False
     """Container of field metadata"""
-    pass
+    def __init__(self, **args):
+        for k, v in args.items():
+            setattr(self, k, v)
+
+    def validate(self, value):
+        return value
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __setitem__(self, key, value):
+        return setattr(self, key, value)
 
 
-def TextField(**args):
-    args['type'] = 'text'
-    return Field(args)
+class TextField(Field):
+    type = 'text'
+
+    def validate(self, value):
+        if not isinstance(value, basestring):
+            raise TypeError('got value of {} expected {}'.format(type(value), 'basestring'))
+        return value
 
 
-def IntField(**args):
-    args['type'] = 'int'
-    return Field(args)
+class IntField(Field):
+    type = 'int'
+
+    def validate(self, value):
+        try:
+            value = int(value)
+        except:
+            raise TypeError('got value of {} expected {}'.format(type(value), self.type))
+        return value
 
 
-def DecimalField(**args):
-    args['type'] = 'double'
-    return Field(args)
+class DecimalField(Field):
+    type = 'double'
+
+    def validate(self, value):
+        try:
+            value = float(value)
+        except:
+            raise TypeError('got value of {} expected {}'.format(type(value), 'float'))
+        return value
 
 
-def TextListField(**args):
-    args['type'] = 'list<text>'
-    return Field(args)
+class JSONField(Field):
+    type = 'text'
+
+    def validate(self, value):
+        if isinstance(value, basestring):
+            try:
+                json.loads(value)
+            except:
+                value = json.dumps(value)
+        else:
+            try:
+                value = json.dumps(value)
+            except:
+                raise TypeError('unable to json serialize, {}'.format(value))
+        return "json(" + value + ')'
 
 
-def DatetimeField(**args):
-    args['type'] = 'timestamp'
-    return Field(args)
+class DatetimeField(Field):
+    type = 'timestamp'
+
+    def validate(self, value):
+        if not isinstance(value, datetime):
+            raise TypeError('got value of {} expected {}'.format(type(value), 'datetime'))
+        return value
 
 
 class ItemMeta(ABCMeta):
@@ -71,7 +117,7 @@ class DictItem(MutableMapping, BaseItem):
 
     def __setitem__(self, key, value):
         if key in self.fields:
-            self._values[key] = value
+            self._values[key] = self.fields[key].validate(value)
         else:
             raise KeyError("%s does not support field: %s" %
                 (self.__class__.__name__, key))
