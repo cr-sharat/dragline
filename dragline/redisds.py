@@ -210,7 +210,7 @@ class Counter(object):
 class Lock(object):
     timeout = 0
 
-    def __init__(self, key, expires=60, namespace='', timeout=None, **redis_kwargs):
+    def __init__(self, key, namespace='', expires=60, timeout=None, **redis_kwargs):
         """Distributed locking using Redis Lua scripting for CAS operations.
 
         Usage::
@@ -261,6 +261,9 @@ class Lock(object):
                 return
             time.sleep(1)
         raise LockTimeout("Timeout while waiting for lock")
+
+    def is_active(self):
+        return self.__db.exists(self.key)
 
     def extend(self):
         if self.lock_key and self.__db.get(self.key) == self.lock_key:
