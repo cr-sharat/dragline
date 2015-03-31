@@ -113,6 +113,9 @@ class Request(object):
                 args['method'] = "GET"
         # if 'timeout' not in args:
         #    args['timeout'] = max(self.settings.DELAY, self.settings.TIMEOUT)
+        for i in args:
+            if callable(args[i]):
+                args[i] = args[i]()
         if keys:
             return {k: args[k] for k in keys}
         return args
