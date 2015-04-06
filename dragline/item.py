@@ -117,7 +117,10 @@ class DictItem(MutableMapping, BaseItem):
 
     def __setitem__(self, key, value):
         if key in self.fields:
-            self._values[key] = self.fields[key].validate(value)
+            if value is None:
+                self._values[key] = None
+            else:
+                self._values[key] = self.fields[key].validate(value)
         else:
             raise KeyError("%s does not support field: %s" %
                 (self.__class__.__name__, key))
