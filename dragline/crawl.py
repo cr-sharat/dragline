@@ -180,7 +180,7 @@ class Crawler:
                 except RequestError:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
-                        self.logger.warning("Rejecting %s", request, exc_info=True)
+                         self.logger.warning("Rejecting %s and meta is %s", request,str(request.meta), exc_info=True)
                     else:
                         self.logger.debug("Retrying %s", request, exc_info=True)
                         self.insert(request, False)
@@ -188,7 +188,7 @@ class Crawler:
                     self.insert(request, False)
                     raise KeyboardInterrupt
                 except:
-                    self.logger.exception("Failed to execute callback on %s", request)
+                    self.logger.exception("Failed to execute callback on %s and meta is %s", request,str(request.meta))
                 else:
                     self.logger.info("Finished processing %s", request)
                 finally:

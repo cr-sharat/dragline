@@ -140,6 +140,7 @@ class Request(object):
             response.meta = self.meta
             return Response(response)
         except Exception as e:
+            self.logger.exception("Failed to send Request on %s",self)
             raise RequestError(e.message)
 
     def get_unique_id(self, hashing=False):
