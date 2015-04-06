@@ -52,6 +52,7 @@ class Crawler:
         self.logger = logger
         self.load(spider)
         Request.stats = self.stats
+        Request.logger = logger
 
     def load(self, spider):
         redis_args = dict(host=self.settings.REDIS_URL,
