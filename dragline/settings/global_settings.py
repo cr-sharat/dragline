@@ -12,6 +12,7 @@ AUTOTHROTTLE = False
 TIMEOUT = 5
 MIN_DELAY = 0.5
 MAX_DELAY = 60
+REQUEST_PROCESSOR = 'dragline.http:RequestProcessor'
 
 DEFAULT_REQUEST_ARGS = {
     'allow_redirects': True,

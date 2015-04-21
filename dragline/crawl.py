@@ -12,12 +12,13 @@ from pytz import timezone
 import logging
 from logging.config import dictConfig
 import time
-
 from requests.compat import urlsplit
 try:
     from cStringIO import StringIO
 except ImportError:
     from requests.compat import StringIO
+from importlib import import_module
+import sys
 
 
 class Pickle():
@@ -48,6 +49,8 @@ class Crawler:
             logger = logging.LoggerAdapter(logger, {"spider_name": spider.name})
         else:
             logger = logging.getLogger(spider.name)
+        self.request_processor = self.get_request_processor(settings.REQUEST_PROCESSOR)
+        Request.processor = self.request_processor
         spider.logger = logger
         self.logger = logger
         self.load(spider)
@@ -76,6 +79,10 @@ class Crawler:
             spider.allowed_domains = []
         self.spider = spider
         self.start()
+
+    def get_request_processor(self, processor):
+        module, classname = processor.split(':')
+        return getattr(import_module(module), classname)()
 
     def current_time(self):
         tz = timezone(self.settings.TIME_ZONE)
@@ -114,6 +121,7 @@ class Crawler:
                 self.url_set.clear()
             self.logger.info("%s", dict(iter(self.stats)))
             self.publiser.publish('status_changed:stopped')
+        self.request_processor.clear()
 
     def is_inactive(self):
         return len(self.runners) == 0
@@ -159,16 +167,24 @@ class Crawler:
             self.settings.MAX_DELAY)
 
     def process_request(self, request):
-        response = request.send()
-        if self.settings.AUTOTHROTTLE:
-            self.updatedelay(response.elapsed.seconds)
-            time.sleep(float(self.conf['DELAY']))
-        self.stats.inc('pages_crawled')
-        self.stats.inc('request_bytes', len(response))
-        requests = request.callback(response)
-        if requests:
-            for i in requests:
-                self.insert(i)
+        response = None
+        try:
+            response = request.send()
+            if self.settings.AUTOTHROTTLE:
+                self.updatedelay(response.elapsed.seconds)
+                time.sleep(float(self.conf['DELAY']))
+            self.stats.inc('pages_crawled')
+            if len(response):
+                self.stats.inc('request_bytes', len(response))
+            requests = request.callback(response)
+            if requests:
+                for i in requests:
+                    self.insert(i)
+        except:
+            raise
+        finally:
+            if response is not None:
+                self.request_processor.put_response(response)
 
     def process_url(self):
         while self.stats['status'] == "running":
@@ -181,7 +197,7 @@ class Crawler:
                 except RequestError:
                     request.retry += 1
                     if request.retry >= self.settings.MAX_RETRY:
-                         self.logger.warning("Rejecting %s and meta is %s", request,str(request.meta), exc_info=True)
+                        self.logger.warning("Rejecting %s and meta is %s", request, str(request.meta), exc_info=True)
                     else:
                         self.logger.debug("Retrying %s", request, exc_info=True)
                         self.insert(request, False)
@@ -189,7 +205,7 @@ class Crawler:
                     self.insert(request, False)
                     raise KeyboardInterrupt
                 except:
-                    self.logger.exception("Failed to execute callback on %s and meta is %s", request,str(request.meta))
+                    self.logger.exception("Failed to execute callback on %s and meta is %s", request, str(request.meta))
                 else:
                     self.logger.info("Finished processing %s", request)
                 finally:

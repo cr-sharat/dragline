@@ -5,18 +5,14 @@ import requests
 from requests.structures import CaseInsensitiveDict
 import json
 import types
+import sys
 
 requests.packages.urllib3.disable_warnings()
 socket.setdefaulttimeout(300)
 
 
 class RequestError(Exception):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
+    pass
 
 
 class Request(object):
@@ -55,6 +51,7 @@ class Request(object):
     meta = None
     dont_filter = False
     retry = 0
+    processor = None
 
     def __init__(self, url, method=None, callback=None, meta=None, headers=None, files=None, data=None, json=None,
                  params=None, auth=None, cookies=None, timeout=None, allow_redirects=None, proxies=None, stream=None,
@@ -69,6 +66,8 @@ class Request(object):
             self.meta = meta
         if dont_filter:
             self.dont_filter = True
+        if self.processor is None:
+            self.processor = RequestProcessor()
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -135,16 +134,15 @@ class Request(object):
 
         """
         try:
-            session = requests.Session()
-            response = session.request(**self.get_args())
-            if response.encoding == 'ISO-8859-1' and 'ISO-8859-1' not in response.headers.get('Content-Type', ''):
-                response.encoding = response.apparent_encoding
-            response.cookies = session.cookies
+            response = self.processor.get_response(**self.get_args())
             response.meta = self.meta
-            return Response(response)
-        except Exception as e:
-            self.logger.exception("Failed to send Request on %s",self)
-            raise RequestError(e.message)
+            return response
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except:
+            exc_class, exc, tb = sys.exc_info()
+            new_exc = RequestError("Failed to send Request on %s: %s", self, exc)
+            raise new_exc.__class__, new_exc, tb
 
     def get_unique_id(self, hashing=False):
         keys = ["method", "url", "data", "params", "json"]
@@ -192,6 +190,23 @@ class Request(object):
             return urlencode(result, doseq=True)
         else:
             return data
+
+
+class RequestProcessor(object):
+    def get_response(self, **kwargs):
+        session = requests.Session()
+        response = session.request(**kwargs)
+
+        if response.encoding == 'ISO-8859-1' and 'ISO-8859-1' not in response.headers.get('Content-Type', ''):
+                response.encoding = response.apparent_encoding
+        response.cookies = session.cookies
+        return Response(response)
+
+    def put_response(self, response):
+        del response
+
+    def clear(self):
+        pass
 
 
 class Response(requests.Response):
