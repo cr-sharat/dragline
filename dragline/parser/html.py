@@ -44,6 +44,19 @@ class HTMLElement(html.HtmlMixin):
     def html_content(self):
         return extract_html(self)
 
+    def x(self, xpaths, default=None, multiple=False):
+        if multiple:
+            if isinstance(xpaths, basestring):
+                return self.xpath(xpaths)
+        elif not multiple:
+            if isinstance(xpaths, basestring):
+                xpaths = [xpaths]
+            for xpath in xpaths:
+                result = self.find('*' + xpath)
+                if result is not None:
+                    return result
+            return default
+
 
 class HtmlComment(etree.CommentBase, HTMLElement):
     pass
