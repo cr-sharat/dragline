@@ -1,7 +1,35 @@
+from __future__ import absolute_import
 from Queue import Queue, Empty
 from selenium import webdriver
 
-webdriver.Remote.__len__ = lambda x: 0
+
+class Driver(object):
+    def __len__(self):
+        return 0
+
+    @property
+    def content(self):
+        return self.page_source
+
+    @property
+    def url(self):
+        return self.current_url
+
+
+class Remote(webdriver.Remote, Driver):
+    pass
+
+
+class FirefoxDriver(webdriver.Firefox, Driver):
+    pass
+
+
+class ChromeDriver(webdriver.Chrome, Driver):
+    pass
+
+
+class PhantomJSDriver(webdriver.PhantomJS, Driver):
+    pass
 
 
 class Browser(object):
@@ -33,14 +61,14 @@ class Browser(object):
 
 class Chrome(Browser):
     def get_driver(self):
-        return webdriver.Chrome()
+        return ChromeDriver()
 
 
 class Firefox(Browser):
     def get_driver(self):
-        return webdriver.Firefox()
+        return FirefoxDriver()
 
 
 class PhantomJS(Browser):
     def get_driver(self):
-        return webdriver.PhantomJS()
+        return PhantomJSDriver()

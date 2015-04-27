@@ -141,7 +141,7 @@ class Request(object):
             raise KeyboardInterrupt
         except:
             exc_class, exc, tb = sys.exc_info()
-            new_exc = RequestError("Failed to send Request on %s: %s", self, exc)
+            new_exc = RequestError("Failed to send Request on %s: %s" % (self, exc))
             raise new_exc.__class__, new_exc, tb
 
     def get_unique_id(self, hashing=False):
