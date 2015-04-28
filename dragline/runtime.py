@@ -3,6 +3,6 @@ import logging
 
 settings = Settings()
 request_processor = None
-logger = logging.getLogger('dragline')
+logger = logging.getLogger()
 spider = None
 stats = dict()

@@ -6,6 +6,7 @@ import sys
 import argparse
 import os
 import logging
+import traceback
 from .crawl import Crawler
 from .settings import Settings
 from logging.config import dictConfig
@@ -18,15 +19,18 @@ def get_request_processor(processor):
 
 
 def load_module(path, filename):
+    filename = filename.strip('.py')
+    sys.path.insert(0, path)
     try:
-        filename = filename.strip('.py')
-        sys.path.insert(0, path)
         module = __import__(filename)
-        del sys.path[0]
-        return module
     except Exception:
-        runtime.logger.exception("Failed to load module %s" % filename)
-        raise ImportError
+        print "Failed to load module %s" % filename
+        print traceback.format_exc()
+        exit()
+    else:
+        return module
+    finally:
+        del sys.path[0]
 
 
 def configure_runtime(spider, settings):
