@@ -64,14 +64,34 @@ class Browser(object):
                 break
 
 
+class Headless(Browser):
+    def __init__(self):
+        from xvfbwrapper import Xvfb
+        self._vdisplay = Xvfb()
+        self._vdisplay.start()
+        super(Headless, self).__init__()
+
+    def clear(self):
+        super(Headless, self).clear()
+        self._vdisplay.stop()
+
+
 class Chrome(Browser):
     def get_driver(self):
         return ChromeDriver()
 
 
+class ChromeX(Headless, Chrome):
+    pass
+
+
 class Firefox(Browser):
     def get_driver(self):
         return FirefoxDriver()
+
+
+class FirefoxX(Headless, Firefox):
+    pass
 
 
 class PhantomJS(Browser):
