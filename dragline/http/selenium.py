@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from Queue import Queue, Empty
 from selenium import webdriver
+from datetime import timedelta
 
 
 class Driver(object):
@@ -14,6 +15,10 @@ class Driver(object):
     @property
     def url(self):
         return self.current_url
+
+    @property
+    def elapsed(self):
+        return timedelta()
 
 
 class Remote(webdriver.Remote, Driver):
@@ -34,7 +39,7 @@ class PhantomJSDriver(webdriver.PhantomJS, Driver):
 
 class Browser(object):
     def get_driver(self):
-        return webdriver.Remote()
+        return Remote()
 
     def __init__(self):
         self.browsers = Queue()

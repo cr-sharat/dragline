@@ -1,15 +1,20 @@
 from gevent import spawn, joinall, monkey
 monkey.patch_all()
 
-from dragline import __version__
+from dragline import __version__, runtime
 import sys
 import argparse
 import os
 import logging
 from .crawl import Crawler
 from .settings import Settings
+from logging.config import dictConfig
+from importlib import import_module
 
-logger = logging.getLogger('dragline')
+
+def get_request_processor(processor):
+    module, classname = processor.split(':')
+    return getattr(import_module(module), classname)()
 
 
 def load_module(path, filename):
@@ -20,24 +25,37 @@ def load_module(path, filename):
         del sys.path[0]
         return module
     except Exception:
-        logger.exception("Failed to load module %s" % filename)
+        runtime.logger.exception("Failed to load module %s" % filename)
         raise ImportError
+
+
+def configure_runtime(spider, settings):
+    runtime.settings = settings
+    dictConfig(settings.LOGGING)
+    runtime.request_processor = get_request_processor(settings.REQUEST_PROCESSOR)
+    runtime.spider = spider
+    if hasattr(settings, 'NAMESPACE'):
+        runtime.logger = logging.getLogger(str(settings.NAMESPACE))
+        runtime.logger = logging.LoggerAdapter(runtime.logger, {"spider_name": spider.name})
+    else:
+        runtime.logger = logging.getLogger(spider.name)
 
 
 def main(spider, settings):
     if not isinstance(settings, Settings):
         settings = Settings(settings)
-    crawler = Crawler(spider, settings)
-    threads = crawler.settings.THREADS
+    configure_runtime(spider, settings)
+    crawler = Crawler()
+    threads = runtime.settings.THREADS
     try:
         joinall([spawn(crawler.process_url) for i in xrange(threads)])
     except KeyboardInterrupt:
         crawler.clear(False)
     except:
-        logger.exception("Unable to complete")
+        runtime.logger.exception("Unable to complete")
     else:
         crawler.clear(True)
-        logger.info("Crawling completed")
+        runtime.logger.info("Crawling completed")
 
 
 def run():

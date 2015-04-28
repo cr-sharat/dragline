@@ -2,11 +2,12 @@ import global_settings
 
 
 class Settings(object):
-    def __init__(self, settings_module):
+    def __init__(self, settings_module=None):
         for setting in dir(global_settings):
             setting_value = getattr(global_settings, setting)
             setattr(self, setting, setting_value)
-        self.update(settings_module)
+        if settings_module:
+            self.update(settings_module)
 
     def update(self, module):
         for setting in dir(module):
