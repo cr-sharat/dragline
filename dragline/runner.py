@@ -43,6 +43,7 @@ def configure_runtime(spider, settings):
         runtime.logger = logging.LoggerAdapter(runtime.logger, {"spider_name": spider.name})
     else:
         runtime.logger = logging.getLogger(spider.name)
+    spider.logger = runtime.logger
 
 
 def main(spider, settings):
