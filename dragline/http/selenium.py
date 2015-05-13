@@ -2,6 +2,9 @@ from __future__ import absolute_import
 from Queue import Queue, Empty
 from selenium import webdriver
 from datetime import timedelta
+from dragline import runtime
+from selenium.webdriver.common.proxy import Proxy, ProxyType
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 
 class Driver(object):
@@ -38,8 +41,8 @@ class PhantomJSDriver(webdriver.PhantomJS, Driver):
 
 
 class Browser(object):
-    def get_driver(self):
-        return Remote()
+    def get_driver(self, **kwargs):
+        return Remote(**kwargs)
 
     def __init__(self):
         self.browsers = Queue()
@@ -48,7 +51,15 @@ class Browser(object):
         try:
             browser = self.browsers.get(block=False)
         except Empty:
-            browser = self.get_driver()
+            proxy = runtime.settings.SELENIUM_ARGS.get('proxy')
+            if proxy:
+                proxy = Proxy({
+                    'proxyType': ProxyType.MANUAL,
+                    'httpProxy': proxy,
+                })
+                browser = self.get_driver(proxy=proxy)
+            else:
+                browser = self.get_driver()
         browser.get(url)
         return browser
 
@@ -77,8 +88,8 @@ class Headless(Browser):
 
 
 class Chrome(Browser):
-    def get_driver(self):
-        return ChromeDriver()
+    def get_driver(self, **kwargs):
+        return ChromeDriver(**kwargs)
 
 
 class ChromeX(Headless, Chrome):
@@ -86,8 +97,16 @@ class ChromeX(Headless, Chrome):
 
 
 class Firefox(Browser):
-    def get_driver(self):
-        return FirefoxDriver()
+    def get_driver(self, **kwargs):
+        firefoxProfile = FirefoxProfile()
+        # Disable CSS
+        firefoxProfile.set_preference('permissions.default.stylesheet', 2)
+        # Disable images
+        firefoxProfile.set_preference('permissions.default.image', 2)
+        # Disable Flash
+        firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+        kwargs['firefox_profile'] = firefoxProfile
+        return FirefoxDriver(**kwargs)
 
 
 class FirefoxX(Headless, Firefox):
@@ -95,5 +114,5 @@ class FirefoxX(Headless, Firefox):
 
 
 class PhantomJS(Browser):
-    def get_driver(self):
-        return PhantomJSDriver()
+    def get_driver(self, **kwargs):
+        return PhantomJSDriver(**kwargs)

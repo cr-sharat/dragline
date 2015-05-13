@@ -31,6 +31,10 @@ DEFAULT_REQUEST_ARGS = {
     'verify': False
 }
 
+SELENIUM_ARGS = {
+    'proxy': None
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

@@ -1,13 +1,15 @@
-from dragline import http
+from dragline import http, runtime
 from dragline.parser import HtmlParser
 import unittest
 import re
+
+request_processor = http.RequestProcessor()
 
 
 class HtmlParserTest(unittest.TestCase):
 
     def setUp(self):
-        pass
+        runtime.request_processor = request_processor
 
     def test_links(self):
         res = http.Request('http://httpbin.org/links/10').send()

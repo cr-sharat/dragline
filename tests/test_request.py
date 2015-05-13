@@ -1,10 +1,12 @@
 import unittest
 import os
-from dragline.http import Request, RequestError
+from dragline.http import Request, RequestError, RequestProcessor
 from requests.compat import urljoin
+from dragline import runtime
 
 
 HTTPBIN = 'http://httpbin.org/'
+request_processor = RequestProcessor()
 
 
 def httpbin(*suffix):
@@ -13,6 +15,8 @@ def httpbin(*suffix):
 
 
 class RequestTest(unittest.TestCase):
+    def setUp(self):
+        runtime.request_processor = request_processor
 
     def test_get(self):
         response = Request(httpbin('get')).send()
