@@ -145,6 +145,7 @@ class Crawler:
                 self.updatedelay(response.elapsed.seconds)
                 time.sleep(float(self.conf['DELAY']))
             runtime.stats.inc('pages_crawled')
+            runtime.stats.inc("status_code:"+str(response.status))
             if len(response):
                 runtime.stats.inc('request_bytes', len(response))
             requests = request.callback(response)

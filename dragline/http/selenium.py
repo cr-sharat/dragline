@@ -8,9 +8,14 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 
 class Driver(object):
+
     def __len__(self):
         return 0
 
+
+    @property
+    def status(self):
+        return 200
     @property
     def content(self):
         return self.page_source
