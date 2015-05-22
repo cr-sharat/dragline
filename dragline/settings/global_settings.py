@@ -32,7 +32,10 @@ DEFAULT_REQUEST_ARGS = {
 }
 
 SELENIUM_ARGS = {
-    'proxy': None
+    'proxy': None,
+    'DISABLE_CSS': False,
+    'DISABLE_IMAGE': False,
+    'DISABLE_FLASH': False
 }
 
 LOGGING = {

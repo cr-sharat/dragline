@@ -12,10 +12,10 @@ class Driver(object):
     def __len__(self):
         return 0
 
-
     @property
     def status(self):
         return 200
+
     @property
     def content(self):
         return self.page_source
@@ -105,11 +105,14 @@ class Firefox(Browser):
     def get_driver(self, **kwargs):
         firefoxProfile = FirefoxProfile()
         # Disable CSS
-        firefoxProfile.set_preference('permissions.default.stylesheet', 2)
+        if runtime.settings.SELENIUM_ARGS.get('DISABLE_CSS'):
+            firefoxProfile.set_preference('permissions.default.stylesheet', 2)
         # Disable images
-        firefoxProfile.set_preference('permissions.default.image', 2)
+        if runtime.settings.SELENIUM_ARGS.get('DISABLE_IMAGE'):
+            firefoxProfile.set_preference('permissions.default.image', 2)
         # Disable Flash
-        firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
+        if runtime.settings.SELENIUM_ARGS.get('DISABLE_FLASH'):
+            firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
         kwargs['firefox_profile'] = firefoxProfile
         return FirefoxDriver(**kwargs)
 
