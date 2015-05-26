@@ -168,6 +168,7 @@ class Crawler:
                     self.process_request(request)
                 except RequestError:
                     request.retry += 1
+                    runtime.stats.inc('retry_count')
                     if request.retry >= runtime.settings.MAX_RETRY:
                         runtime.logger.warning("Rejecting %s and meta is %s", request, str(request.meta), exc_info=True)
                     else:

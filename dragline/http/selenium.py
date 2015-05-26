@@ -65,6 +65,8 @@ class Browser(object):
                 browser = self.get_driver(proxy=proxy)
             else:
                 browser = self.get_driver()
+            if hasattr(runtime.spider,"init_browser"):
+                runtime.spider.init_browser(browser)
         browser.get(url)
         return browser
 
