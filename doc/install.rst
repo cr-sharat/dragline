@@ -15,7 +15,7 @@ The installation steps assume that you have the following things installed:
 
 for Ubuntu users::
 
-    sudo apt-get install libxml2-dev libxslt-dev python-dev redis-server
+    sudo apt-get install libxml2-dev libxslt-dev python-dev zlib1g-dev redis-server
 
 Installing Dragline
 ===================

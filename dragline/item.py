@@ -18,7 +18,7 @@ class Field(object):
         for k, v in args.items():
             setattr(self, k, v)
 
-    def validate(self, value):
+    def validate(self, key, value):
         return value
 
     def __getitem__(self, key):
@@ -31,38 +31,38 @@ class Field(object):
 class TextField(Field):
     type = 'text'
 
-    def validate(self, value):
+    def validate(self, key, value):
         if not isinstance(value, basestring):
-            raise TypeError('got value of {} expected {}'.format(type(value), 'basestring'))
+            raise TypeError('got value of {} expected {} for {}'.format(type(value), 'basestring', key))
         return value
 
 
 class IntField(Field):
     type = 'int'
 
-    def validate(self, value):
+    def validate(self, key, value):
         try:
             value = int(value)
         except:
-            raise TypeError('got value of {} expected {}'.format(type(value), self.type))
+            raise TypeError('got value of {} expected {} for {}'.format(type(value), self.type, key))
         return value
 
 
 class DecimalField(Field):
     type = 'double'
 
-    def validate(self, value):
+    def validate(self, key, value):
         try:
             value = float(value)
         except:
-            raise TypeError('got value of {} expected {}'.format(type(value), 'float'))
+            raise TypeError('got value of {} expected {} for {}'.format(type(value), 'float', key))
         return value
 
 
 class JSONField(Field):
     type = 'text'
 
-    def validate(self, value):
+    def validate(self, key, value):
         if isinstance(value, basestring):
             try:
                 json.loads(value)
@@ -79,9 +79,9 @@ class JSONField(Field):
 class DatetimeField(Field):
     type = 'timestamp'
 
-    def validate(self, value):
+    def validate(self, key, value):
         if not isinstance(value, datetime):
-            raise TypeError('got value of {} expected {}'.format(type(value), 'datetime'))
+            raise TypeError('got value of {} expected {} for {}'.format(type(value), 'datetime', key))
         return value
 
 
@@ -120,7 +120,7 @@ class DictItem(MutableMapping, BaseItem):
             if value is None:
                 self._values[key] = None
             else:
-                self._values[key] = self.fields[key].validate(value)
+                self._values[key] = self.fields[key].validate(key, value)
         else:
             raise KeyError("%s does not support field: %s" %
                 (self.__class__.__name__, key))
