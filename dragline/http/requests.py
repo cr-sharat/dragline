@@ -9,7 +9,11 @@ import types
 import sys
 from dragline import runtime
 
-requests.packages.urllib3.disable_warnings()
+try:
+    from requests.packages import urllib3
+    urllib3.disable_warnings()
+except:
+    pass
 socket.setdefaulttimeout(300)
 
 
