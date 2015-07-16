@@ -5,8 +5,6 @@ from datetime import timedelta
 from dragline import runtime
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
-
-
 class Driver(object):
 
     def __len__(self):
@@ -67,7 +65,13 @@ class Browser(object):
                 browser = self.get_driver()
             if hasattr(runtime.spider,"init_browser"):
                 runtime.spider.init_browser(browser)
-        browser.get(url)
+        self.width = runtime.settings.SELENIUM_ARGS.get('WINDOW_SIZE_WIDTH')
+        if self.width == False:
+            self.width = 1024
+        self.height = runtime.settings.SELENIUM_ARGS.get('WINDOW_SIZE_HEIGHT')
+        if self.height == False:
+            self.height = 768
+        browser.set_window_size(self.width,self.height)
         return browser
 
     def put_response(self, browser):
@@ -85,8 +89,15 @@ class Browser(object):
 class Headless(Browser):
     def __init__(self):
         from xvfbwrapper import Xvfb
-        self._vdisplay = Xvfb()
+        self.width = runtime.settings.SELENIUM_ARGS.get('WINDOW_SIZE_WIDTH')
+        if self.width == False:
+            self.width = 1024
+        self.height = runtime.settings.SELENIUM_ARGS.get('WINDOW_SIZE_HEIGHT')
+        if self.height == False:
+            self.height = 768
+        self._vdisplay = Xvfb(width=self.width,height=self.height)
         self._vdisplay.start()
+        super(Headless, self).__init__()
         super(Headless, self).__init__()
 
     def clear(self):
