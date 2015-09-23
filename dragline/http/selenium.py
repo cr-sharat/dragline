@@ -125,9 +125,9 @@ class Firefox(Browser):
             firefoxProfile.set_preference('permissions.default.image', 2)
         # Disable Flash
         if runtime.settings.SELENIUM_ARGS.get('DISABLE_FLASH'):
-            firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', 'false')
-        firefoxProfile.set_preference("browser.privatebrowsing.dont_promt_on_enter","true")
-        firefoxProfile.set_preference("browser.privatebrowsing.autostart","true")
+            firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', False)
+        firefoxProfile.set_preference("browser.privatebrowsing.dont_promt_on_enter",True)
+        firefoxProfile.set_preference("browser.privatebrowsing.autostart",True)
         kwargs['firefox_profile'] = firefoxProfile
         return FirefoxDriver(**kwargs)
 
