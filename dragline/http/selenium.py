@@ -126,6 +126,11 @@ class Firefox(Browser):
         # Disable Flash
         if runtime.settings.SELENIUM_ARGS.get('DISABLE_FLASH'):
             firefoxProfile.set_preference('dom.ipc.plugins.enabled.libflashplayer.so', False)
+        firefoxProfile.set_preference("browser.sessionhistory.max_entries",10)
+        firefoxProfile.set_preference("browser.cahche.memory.capacity",15240)
+        firefoxProfile.set_preference("browser.cache.disk.enable", False);
+        firefoxProfile.set_preference("browser.cache.memory.enable", False);
+        firefoxProfile.set_preference("browser.cache.offline.enable", False);
         firefoxProfile.set_preference("browser.privatebrowsing.dont_promt_on_enter",True)
         firefoxProfile.set_preference("browser.privatebrowsing.autostart",True)
         kwargs['firefox_profile'] = firefoxProfile
